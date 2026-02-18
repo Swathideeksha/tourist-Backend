@@ -6,17 +6,20 @@ require("dotenv").config();
 
 // 2️⃣ APP INIT
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // 3️⃣ MIDDLEWARE
 app.use(cors());
 app.use(express.json());
 
 // 4️⃣ MONGODB CONNECTION
-mongoose
-  .connect(process.env.MONGO_URI) // no extra options needed
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error ❌", err));
+// Only connect to MongoDB if URI is provided and not in serverless environment
+if (process.env.MONGO_URI && !process.env.VERCEL) {
+  mongoose
+    .connect(process.env.MONGO_URI)
+    .then(() => console.log("✅ MongoDB connected"))
+    .catch((err) => console.error("MongoDB connection error ❌", err));
+}
 
 // 5️⃣ TEST ROUTE
 app.get("/", (req, res) => {
@@ -30,7 +33,12 @@ app.use("/api/places", placesRoutes);
 const contactRoutes = require("./routes/contactRoutes");
 app.use("/api/contact", contactRoutes);
 
-// 7️⃣ START SERVER
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// 7️⃣ EXPORT FOR VERCEL
+module.exports = app;
+
+// 8️⃣ START SERVER (only when not in serverless)
+if (process.env.VERCEL !== "true") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
