@@ -13,8 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // 4️⃣ MONGODB CONNECTION
-// Only connect to MongoDB if URI is provided and not in serverless environment
-if (process.env.MONGO_URI && !process.env.VERCEL) {
+// Always attempt to connect when MONGO_URI is present (works on serverless too)
+if (process.env.MONGO_URI) {
   mongoose
     .connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB connected"))
