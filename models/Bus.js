@@ -1,30 +1,48 @@
 const mongoose = require("mongoose");
 
-const placeSchema = new mongoose.Schema({
+const busSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
     trim: true,
   },
-  location: {
+  type: {
     type: String,
     required: true,
-    trim: true,
+    enum: ["PREMIUM SERVICES", "LUXURY SERVICES", "SEMI LUXURY", "EXPRESS", "ORDINARY"],
   },
-  description: {
+  model: {
     type: String,
     required: true,
-  },
-  category: {
-    type: String,
-    required: true,
-    enum: ["beach", "hill-station", "history", "religious"],
   },
   image: {
     type: String,
     default: "",
   },
   images: [{
+    type: String,
+  }],
+  capacity: {
+    type: Number,
+    required: true,
+  },
+  safetyGear: {
+    type: String,
+    default: "Standard",
+  },
+  engine: {
+    type: String,
+    default: "BS6",
+  },
+  contact: {
+    type: String,
+    default: "",
+  },
+  address: {
+    type: String,
+    default: "",
+  },
+  amenities: [{
     type: String,
   }],
   rating: {
@@ -37,14 +55,10 @@ const placeSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  savedCount: {
-    type: Number,
-    default: 0,
-  },
   isActive: {
     type: Boolean,
     default: true,
   },
 }, { timestamps: true });
 
-module.exports = mongoose.model("Place", placeSchema);
+module.exports = mongoose.model("Bus", busSchema);

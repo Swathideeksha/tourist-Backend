@@ -33,6 +33,22 @@ app.use("/api/places", placesRoutes);
 const contactRoutes = require("./routes/contactRoutes");
 app.use("/api/contact", contactRoutes);
 
+// Admin routes
+const adminRoutes = require("./routes/adminRoutes");
+app.use("/api/admin", adminRoutes);
+
+// Places management routes
+const placesManagementRoutes = require("./routes/placesManagementRoutes");
+app.use("/api/places-management", placesManagementRoutes);
+
+// Buses management routes
+const busesManagementRoutes = require("./routes/busesManagementRoutes");
+app.use("/api/buses-management", busesManagementRoutes);
+
+// Analytics routes
+const analyticsRoutes = require("./routes/analyticsRoutes");
+app.use("/api/analytics", analyticsRoutes);
+
 // 7️⃣ EXPORT FOR VERCEL
 module.exports = app;
 
