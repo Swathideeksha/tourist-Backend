@@ -42,9 +42,12 @@ router.put("/:id/like", async (req, res) => {
       return res.status(404).json({ message: "Place not found" });
     }
     
-    // Set savedCount to 1 if liked, 0 if unliked
-    // This tracks unique places that have been liked
-    place.savedCount = liked ? 1 : 0;
+    // Increment or decrement savedCount based on liked status
+    if (liked) {
+      place.savedCount += 1;
+    } else {
+      place.savedCount = Math.max(0, place.savedCount - 1);
+    }
     
     await place.save();
     res.json({ savedCount: place.savedCount });

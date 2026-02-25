@@ -113,8 +113,11 @@ router.get("/stats/summary", async (req, res) => {
   try {
     const totalPlaces = await Place.countDocuments();
     
-    // Count unique places that have been liked (savedCount > 0)
-    const totalSaved = await Place.countDocuments({ savedCount: { $gt: 0 } });
+    // Sum up all savedCount values to get total likes
+    const placesWithLikes = await Place.aggregate([
+      { $group: { _id: null, totalLikes: { $sum: "$savedCount" } } }
+    ]);
+    const totalSaved = placesWithLikes.length > 0 ? placesWithLikes[0].totalLikes : 0;
     
     const byCategory = await Place.aggregate([
       { $group: { _id: "$category", count: { $sum: 1 } } }
