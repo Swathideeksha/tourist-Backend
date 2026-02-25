@@ -396,3 +396,5 @@ async function seedPlaces() {
 }
 
 seedPlaces();
+
+module.exports = { seedPlaces };

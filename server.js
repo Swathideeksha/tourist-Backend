@@ -27,6 +27,17 @@ app.get("/", (req, res) => {
   res.send("Backend is running successfully");
 });
 
+// Seed route for populating database
+const seedPlaces = require("./seedPlaces");
+app.post("/api/seed", async (req, res) => {
+  try {
+    await seedPlaces.seedPlaces();
+    res.json({ message: "Database seeded successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error seeding database", error: error.message });
+  }
+});
+
 // 6️⃣ OTHER ROUTES
 const placesRoutes = require("./routes/placesRoutes");
 app.use("/api/places", placesRoutes);

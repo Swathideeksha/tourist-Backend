@@ -23,7 +23,14 @@ router.get("/", async (req, res) => {
 // GET single place by id
 router.get("/:id", async (req, res) => {
   try {
-    const place = await Place.findById(req.params.id);
+    const { id } = req.params;
+    
+    // Check if the ID is a valid MongoDB ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid place ID" });
+    }
+    
+    const place = await Place.findById(id);
     if (!place) return res.status(404).json({ message: "Place not found" });
     res.json(place);
   } catch (error) {
