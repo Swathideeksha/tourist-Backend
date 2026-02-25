@@ -34,7 +34,7 @@ router.get("/:id", async (req, res) => {
 // POST /api/places-management - Create new place
 router.post("/", async (req, res) => {
   try {
-    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive } = req.body;
+    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities } = req.body;
 
     const place = new Place({
       name,
@@ -47,6 +47,8 @@ router.post("/", async (req, res) => {
       reviewsCount: reviewsCount || 0,
       savedCount: savedCount || 0,
       isActive: isActive !== undefined ? isActive : true,
+      placesToVisit: placesToVisit || [],
+      nearbyFacilities: nearbyFacilities || [],
     });
 
     await place.save();
@@ -60,7 +62,7 @@ router.post("/", async (req, res) => {
 // PUT /api/places-management/:id - Update place
 router.put("/:id", async (req, res) => {
   try {
-    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive } = req.body;
+    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities } = req.body;
 
     const place = await Place.findByIdAndUpdate(
       req.params.id,
@@ -75,6 +77,8 @@ router.put("/:id", async (req, res) => {
         reviewsCount,
         savedCount,
         isActive,
+        placesToVisit: placesToVisit || [],
+        nearbyFacilities: nearbyFacilities || [],
       },
       { new: true, runValidators: true }
     );

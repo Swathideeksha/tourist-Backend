@@ -45,6 +45,12 @@ const placeSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  placesToVisit: [{
+    type: String,
+  }],
+  nearbyFacilities: [{
+    type: String,
+  }],
 }, { timestamps: true });
 
 module.exports = mongoose.model("Place", placeSchema);
