@@ -3,6 +3,11 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
+// Import routes
+const adminRoutes = require("./routes/adminRoutes");
+const placesManagementRoutes = require("./routes/placesManagementRoutes");
+const Place = require("./models/Place");
+
 const app = express();
 
 // Middleware
@@ -20,26 +25,16 @@ if (MONGO_URI) {
     .catch((err) => console.error("MongoDB connection error ❌", err));
 }
 
-// Place Schema
-const placeSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
-  location: { type: String, required: true, trim: true },
-  description: { type: String, required: true },
-  category: { type: String, required: true, enum: ["beach", "hill-station", "history", "religious"] },
-  image: { type: String, default: "" },
-  images: [{ type: String }],
-  rating: { type: Number, default: 0 },
-  reviewsCount: { type: Number, default: 0 },
-  savedCount: { type: Number, default: 0 },
-  isActive: { type: Boolean, default: true },
-}, { timestamps: true });
-
-const Place = mongoose.model("Place", placeSchema);
-
 // Test route
 app.get("/", (req, res) => {
   res.send("Backend is running successfully");
 });
+
+// Admin routes
+app.use("/api/admin", adminRoutes);
+
+// Places management routes
+app.use("/api/places-management", placesManagementRoutes);
 
 // GET all places (with optional category filter)
 app.get("/api/places", async (req, res) => {
