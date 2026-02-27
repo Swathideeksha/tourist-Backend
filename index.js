@@ -5,6 +5,7 @@ require("dotenv").config();
 
 // Import routes
 const adminRoutes = require("./routes/adminRoutes");
+const placesRoutes = require("./routes/placesRoutes");
 const placesManagementRoutes = require("./routes/placesManagementRoutes");
 const Place = require("./models/Place");
 
@@ -33,26 +34,11 @@ app.get("/", (req, res) => {
 // Admin routes
 app.use("/api/admin", adminRoutes);
 
+// Places routes (public)
+app.use("/api/places", placesRoutes);
+
 // Places management routes
 app.use("/api/places-management", placesManagementRoutes);
-
-// GET all places (with optional category filter)
-app.get("/api/places", async (req, res) => {
-  try {
-    const { category } = req.query;
-    let query = { isActive: true };
-    
-    if (category && category !== "all") {
-      query.category = category;
-    }
-    
-    const places = await Place.find(query).sort({ createdAt: -1 });
-    res.json(places);
-  } catch (error) {
-    console.error("Get places error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 // Seed route
 app.post("/api/seed", async (req, res) => {
