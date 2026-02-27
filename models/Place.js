@@ -51,6 +51,10 @@ const placeSchema = new mongoose.Schema({
   nearbyFacilities: [{
     type: String,
   }],
+  howToReach: {
+    type: String,
+    default: "",
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Place || mongoose.model("Place", placeSchema);

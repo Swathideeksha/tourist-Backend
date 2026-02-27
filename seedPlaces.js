@@ -385,16 +385,9 @@ async function seedPlaces() {
     Object.entries(summary).forEach(([cat, count]) => {
       console.log(`   ${cat}: ${count} places`);
     });
-
-    await mongoose.disconnect();
-    console.log("\n🔌 Disconnected from MongoDB");
-    process.exit(0);
   } catch (error) {
     console.error("❌ Error seeding places:", error);
-    process.exit(1);
   }
 }
-
-seedPlaces();
 
 module.exports = { seedPlaces };
