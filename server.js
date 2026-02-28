@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 // 3️⃣ MIDDLEWARE
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // 4️⃣ MONGODB CONNECTION
 // Always attempt to connect when MONGO_URI is present (works on serverless too)
@@ -24,6 +25,17 @@ if (process.env.MONGO_URI) {
 // 5️⃣ TEST ROUTE
 app.get("/", (req, res) => {
   res.send("Backend is running successfully");
+});
+
+// Seed route for populating database
+const seedPlaces = require("./seedPlaces");
+app.post("/api/seed", async (req, res) => {
+  try {
+    await seedPlaces.seedPlaces();
+    res.json({ message: "Database seeded successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error seeding database", error: error.message });
+  }
 });
 
 // 6️⃣ OTHER ROUTES
@@ -42,6 +54,18 @@ app.use("/api/admin/places", adminPlacesRoutes);
 
 const adminBusesRoutes = require("./routes/adminBusesRoutes");
 app.use("/api/admin/buses", adminBusesRoutes);
+
+// Places management routes
+const placesManagementRoutes = require("./routes/placesManagementRoutes");
+app.use("/api/places-management", placesManagementRoutes);
+
+// Buses management routes
+const busesManagementRoutes = require("./routes/busesManagementRoutes");
+app.use("/api/buses-management", busesManagementRoutes);
+
+// Analytics routes
+const analyticsRoutes = require("./routes/analyticsRoutes");
+app.use("/api/analytics", analyticsRoutes);
 
 // 7️⃣ EXPORT FOR VERCEL
 module.exports = app;

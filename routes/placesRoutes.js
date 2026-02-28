@@ -1,24 +1,67 @@
 const express = require("express");
 const router = express.Router();
+const Place = require("../models/Place");
 
-// Dummy tourist places data
-const places = [
-  { id: 1, name: "Taj Mahal", city: "Agra", description: "Famous white marble monument" },
-  { id: 2, name: "Red Fort", city: "Delhi", description: "Historic fort made of red sandstone" },
-  { id: 3, name: "Qutub Minar", city: "Delhi", description: "Tallest brick minaret in the world" },
-  { id: 4, name: "Gateway of India", city: "Mumbai", description: "Iconic arch overlooking the sea" }
-];
-
-// GET all places
-router.get("/", (req, res) => {
-  res.json(places);
+// GET all places (with optional category filter)
+router.get("/", async (req, res) => {
+  try {
+    const { category } = req.query;
+    let query = { isActive: true };
+    
+    if (category && category !== "all") {
+      query.category = category;
+    }
+    
+    const places = await Place.find(query).sort({ createdAt: -1 });
+    res.json(places);
+  } catch (error) {
+    console.error("Get places error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // GET single place by id
-router.get("/:id", (req, res) => {
-  const place = places.find(p => p.id === parseInt(req.params.id));
-  if (!place) return res.status(404).json({ message: "Place not found" });
-  res.json(place);
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if the ID is a valid MongoDB ObjectId format
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid place ID" });
+    }
+    
+    const place = await Place.findById(id);
+    if (!place) return res.status(404).json({ message: "Place not found" });
+    res.json(place);
+  } catch (error) {
+    console.error("Get place error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// PUT /api/places/:id/like - Toggle like on a place
+router.put("/:id/like", async (req, res) => {
+  try {
+    const { liked } = req.body;
+    const place = await Place.findById(req.params.id);
+    
+    if (!place) {
+      return res.status(404).json({ message: "Place not found" });
+    }
+    
+    // Increment or decrement savedCount based on liked status
+    if (liked) {
+      place.savedCount += 1;
+    } else {
+      place.savedCount = Math.max(0, place.savedCount - 1);
+    }
+    
+    await place.save();
+    res.json({ savedCount: place.savedCount });
+  } catch (error) {
+    console.error("Like error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;
