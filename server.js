@@ -63,6 +63,23 @@ app.use("/api/places-management", placesManagementRoutes);
 const busesManagementRoutes = require("./routes/busesManagementRoutes");
 app.use("/api/buses-management", busesManagementRoutes);
 
+// Public buses route (for user-facing pages - no auth required)
+const Bus = require("./models/Bus");
+app.get("/api/buses", async (req, res) => {
+  try {
+    const buses = await Bus.find().sort({ createdAt: -1 });
+    // Map image to img for frontend compatibility
+    const mappedBuses = buses.map(bus => ({
+      ...bus.toObject(),
+      img: bus.image || bus.img
+    }));
+    res.json(mappedBuses);
+  } catch (error) {
+    console.error("Get buses error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Analytics routes
 const analyticsRoutes = require("./routes/analyticsRoutes");
 app.use("/api/analytics", analyticsRoutes);

@@ -6,14 +6,21 @@ const Place = require("../models/Place");
 router.get("/", async (req, res) => {
   try {
     const { category } = req.query;
-    let query = { isActive: true };
+    let query = {};
     
     if (category && category !== "all") {
       query.category = category;
     }
     
     const places = await Place.find(query).sort({ createdAt: -1 });
-    res.json(places);
+    
+    // Map image to img for frontend compatibility
+    const mappedPlaces = places.map(place => ({
+      ...place.toObject(),
+      img: place.image || place.img
+    }));
+    
+    res.json(mappedPlaces);
   } catch (error) {
     console.error("Get places error:", error);
     res.status(500).json({ message: "Server error" });

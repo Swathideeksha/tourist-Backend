@@ -7,7 +7,9 @@ require("dotenv").config();
 const adminRoutes = require("./routes/adminRoutes");
 const placesRoutes = require("./routes/placesRoutes");
 const placesManagementRoutes = require("./routes/placesManagementRoutes");
+const busesManagementRoutes = require("./routes/busesManagementRoutes");
 const Place = require("./models/Place");
+const Bus = require("./models/Bus");
 
 const app = express();
 
@@ -40,6 +42,25 @@ app.use("/api/places", placesRoutes);
 // Places management routes
 app.use("/api/places-management", placesManagementRoutes);
 
+// Public buses route (for user-facing pages - no auth required)
+app.get("/api/buses", async (req, res) => {
+  try {
+    const buses = await Bus.find().sort({ createdAt: -1 });
+    // Map image to img for frontend compatibility
+    const mappedBuses = buses.map(bus => ({
+      ...bus.toObject(),
+      img: bus.image || bus.img
+    }));
+    res.json(mappedBuses);
+  } catch (error) {
+    console.error("Get buses error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Buses management routes (requires auth)
+app.use("/api/buses-management", busesManagementRoutes);
+
 // Seed route
 app.post("/api/seed", async (req, res) => {
   try {
@@ -58,9 +79,16 @@ app.post("/api/seed", async (req, res) => {
       { name: "Mookambika Temple", location: "Kollur", description: "Sacred goddess temple", category: "religious", image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800" },
     ];
 
-    await Place.deleteMany({});
-    await Place.insertMany(placesData);
-    res.json({ message: `Successfully added ${placesData.length} places!` });
+    // Only add places that don't already exist (by name)
+    let addedCount = 0;
+    for (const placeData of placesData) {
+      const existing = await Place.findOne({ name: placeData.name });
+      if (!existing) {
+        await Place.create(placeData);
+        addedCount++;
+      }
+    }
+    res.json({ message: `Successfully added ${addedCount} new places! (Existing places kept)` });
   } catch (error) {
     console.error("Seed error:", error);
     res.status(500).json({ message: "Error seeding database", error: error.message });
