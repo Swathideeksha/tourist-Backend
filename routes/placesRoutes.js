@@ -5,6 +5,7 @@ const Place = require("../models/Place");
 // GET all places (with optional category filter)
 router.get("/", async (req, res) => {
   try {
+    console.log("[PLACES] GET request received, query:", req.query);
     const { category } = req.query;
     let query = {};
     
@@ -13,6 +14,7 @@ router.get("/", async (req, res) => {
     }
     
     const places = await Place.find(query).sort({ createdAt: -1 });
+    console.log("[PLACES] Found", places.length, "places for category:", category || "all");
     
     // Map image to img for frontend compatibility
     const mappedPlaces = places.map(place => ({

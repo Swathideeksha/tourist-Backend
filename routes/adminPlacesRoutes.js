@@ -28,12 +28,13 @@ router.get("/:id", async (req, res) => {
 // Add new place
 router.post("/", async (req, res) => {
   try {
-    const { name, location, img, category, description, images, bestTime, temperature } = req.body;
+    const { name, location, img, image, category, description, images, bestTime, temperature } = req.body;
     
     const newPlace = new Place({
       name,
       location,
-      img,
+      img: img || image, // Accept both img and image
+      image: image || img,
       category,
       description,
       images: images || [],
@@ -51,11 +52,11 @@ router.post("/", async (req, res) => {
 // Update place
 router.put("/:id", async (req, res) => {
   try {
-    const { name, location, img, category, description, images, bestTime, temperature } = req.body;
+    const { name, location, img, image, category, description, images, bestTime, temperature } = req.body;
     
     const updatedPlace = await Place.findByIdAndUpdate(
       req.params.id,
-      { name, location, img, category, description, images, bestTime, temperature },
+      { name, location, img: img || image, image: image || img, category, description, images, bestTime, temperature },
       { new: true, runValidators: true }
     );
 

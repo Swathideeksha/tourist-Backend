@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Analytics = require("../models/Analytics");
-const { authMiddleware } = require("./adminRoutes");
-
-// Apply auth middleware to all routes
-router.use(authMiddleware);
 
 // GET /api/analytics - Get all analytics data
 router.get("/", async (req, res) => {

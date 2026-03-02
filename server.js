@@ -67,7 +67,9 @@ app.use("/api/buses-management", busesManagementRoutes);
 const Bus = require("./models/Bus");
 app.get("/api/buses", async (req, res) => {
   try {
+    console.log("[BUSES] GET request received");
     const buses = await Bus.find().sort({ createdAt: -1 });
+    console.log("[BUSES] Found", buses.length, "buses");
     // Map image to img for frontend compatibility
     const mappedBuses = buses.map(bus => ({
       ...bus.toObject(),

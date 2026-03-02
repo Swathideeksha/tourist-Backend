@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Bus = require("../models/Bus");
-const { authMiddleware } = require("./adminRoutes");
-
-// Apply auth middleware to all routes
-router.use(authMiddleware);
 
 // GET /api/buses-management - Get all buses
 router.get("/", async (req, res) => {
@@ -34,6 +30,7 @@ router.get("/:id", async (req, res) => {
 // POST /api/buses-management - Create new bus
 router.post("/", async (req, res) => {
   try {
+    console.log("[BUSES-MANAGEMENT] POST request received:", req.body);
     const { name, type, model, image, images, capacity, safetyGear, engine, contact, address, amenities, rating, reviewsCount, isActive } = req.body;
 
     const bus = new Bus({
@@ -54,6 +51,7 @@ router.post("/", async (req, res) => {
     });
 
     await bus.save();
+    console.log("[BUSES-MANAGEMENT] Bus saved successfully:", bus._id, "Name:", bus.name);
     res.status(201).json(bus);
   } catch (error) {
     console.error("Create bus error:", error);

@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Place = require("../models/Place");
-const { authMiddleware } = require("./adminRoutes");
-
-// Apply auth middleware to all routes
-router.use(authMiddleware);
 
 // GET /api/places-management - Get all places
 router.get("/", async (req, res) => {
@@ -34,6 +30,7 @@ router.get("/:id", async (req, res) => {
 // POST /api/places-management - Create new place
 router.post("/", async (req, res) => {
   try {
+    console.log("[PLACES-MANAGEMENT] POST request received:", req.body);
     const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
 
     const place = new Place({
@@ -53,6 +50,7 @@ router.post("/", async (req, res) => {
     });
 
     await place.save();
+    console.log("[PLACES-MANAGEMENT] Place saved successfully:", place._id, "Name:", place.name, "Category:", place.category);
     res.status(201).json(place);
   } catch (error) {
     console.error("Create place error:", error);

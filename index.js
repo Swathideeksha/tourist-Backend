@@ -5,9 +5,12 @@ require("dotenv").config();
 
 // Import routes
 const adminRoutes = require("./routes/adminRoutes");
+const adminPlacesRoutes = require("./routes/adminPlacesRoutes");
+const adminBusesRoutes = require("./routes/adminBusesRoutes");
 const placesRoutes = require("./routes/placesRoutes");
 const placesManagementRoutes = require("./routes/placesManagementRoutes");
 const busesManagementRoutes = require("./routes/busesManagementRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 const Place = require("./models/Place");
 const Bus = require("./models/Bus");
 
@@ -36,16 +39,26 @@ app.get("/", (req, res) => {
 // Admin routes
 app.use("/api/admin", adminRoutes);
 
+// Admin places and buses routes
+app.use("/api/admin/places", adminPlacesRoutes);
+app.use("/api/admin/buses", adminBusesRoutes);
+
+// Contact routes
+app.use("/api/contact", contactRoutes);
+
 // Places routes (public)
 app.use("/api/places", placesRoutes);
 
 // Places management routes
+console.log("[INDEX] Registering places-management routes");
 app.use("/api/places-management", placesManagementRoutes);
 
 // Public buses route (for user-facing pages - no auth required)
 app.get("/api/buses", async (req, res) => {
   try {
+    console.log("[INDEX] /api/buses GET request received");
     const buses = await Bus.find().sort({ createdAt: -1 });
+    console.log("[INDEX] Found", buses.length, "buses");
     // Map image to img for frontend compatibility
     const mappedBuses = buses.map(bus => ({
       ...bus.toObject(),
