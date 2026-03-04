@@ -13,8 +13,6 @@ const placeSchema = new mongoose.Schema({
   rating: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },
   savedCount: { type: Number, default: 0 },
-  latitude: { type: Number },
-  longitude: { type: Number },
   createdAt: { type: Date, default: Date.now }
 });
 
