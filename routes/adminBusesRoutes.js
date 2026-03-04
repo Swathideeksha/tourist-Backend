@@ -5,9 +5,22 @@ const Bus = require("../models/Bus");
 // Get all buses from database
 router.get("/", async (req, res) => {
   try {
+    console.log("[adminBusesRoutes] GET /api/admin/buses - Fetching buses");
+    
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.log("[adminBusesRoutes] MongoDB not connected, readyState:", mongoose.connection.readyState);
+      if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("[adminBusesRoutes] MongoDB reconnected");
+      }
+    }
+    
     const buses = await Bus.find().sort({ createdAt: -1 });
+    console.log("[adminBusesRoutes] Found buses:", buses.length);
     res.json(buses);
   } catch (error) {
+    console.error("[adminBusesRoutes] Error fetching buses:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });

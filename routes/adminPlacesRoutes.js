@@ -5,9 +5,23 @@ const Place = require("../models/Place");
 // Get all places from database
 router.get("/", async (req, res) => {
   try {
+    console.log("[adminPlacesRoutes] GET /api/admin/places - Fetching places");
+    
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.log("[adminPlacesRoutes] MongoDB not connected, readyState:", mongoose.connection.readyState);
+      // Try to reconnect
+      if (mongoose.connection.readyState === 0 && process.env.MONGO_URI) {
+        await mongoose.connect(process.env.MONGO_URI);
+        console.log("[adminPlacesRoutes] MongoDB reconnected");
+      }
+    }
+    
     const places = await Place.find().sort({ createdAt: -1 });
+    console.log("[adminPlacesRoutes] Found places:", places.length);
     res.json(places);
   } catch (error) {
+    console.error("[adminPlacesRoutes] Error fetching places:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });

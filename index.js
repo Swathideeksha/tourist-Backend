@@ -21,14 +21,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://sushswathi:swathisush1716@cluster0.5bvhfb0.mongodb.net/?appName=Cluster0";
+// MongoDB Connection - Improved for Vercel serverless
+const MONGO_URI = process.env.MONGO_URI;
 
+// Connect to MongoDB if URI exists
 if (MONGO_URI) {
-  mongoose
-    .connect(MONGO_URI)
-    .then(() => console.log("✅ MongoDB connected"))
-    .catch((err) => console.error("MongoDB connection error ❌", err));
+  // Check if already connected
+  if (mongoose.connection.readyState === 0) {
+    mongoose.connect(MONGO_URI)
+      .then(() => console.log("✅ MongoDB connected"))
+      .catch((err) => console.error("MongoDB connection error ❌", err));
+  } else {
+    console.log("MongoDB already connected, readyState:", mongoose.connection.readyState);
+  }
+} else {
+  console.warn("⚠️ MONGO_URI not defined in environment variables");
 }
 
 // Test route
