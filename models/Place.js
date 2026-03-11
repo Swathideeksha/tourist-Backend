@@ -13,6 +13,12 @@ const placeSchema = new mongoose.Schema({
   rating: { type: Number, default: 0 },
   reviewsCount: { type: Number, default: 0 },
   savedCount: { type: Number, default: 0 },
+  latitude: { type: Number },
+  longitude: { type: Number },
+  isActive: { type: Boolean, default: true },
+  placesToVisit: [{ type: String }],
+  nearbyFacilities: [{ type: String }],
+  howToReach: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

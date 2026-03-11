@@ -2,6 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path");
 require("dotenv").config();
 
 // 2️⃣ APP INIT
@@ -12,6 +13,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use('/uploads', express.static('uploads'));
 
 // 4️⃣ MONGODB CONNECTION
 // Always attempt to connect when MONGO_URI is present (works on serverless too)
