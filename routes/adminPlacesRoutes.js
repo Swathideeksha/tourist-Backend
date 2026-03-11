@@ -94,7 +94,9 @@ router.post("/", upload.fields([
       howToReach: howToReach || ''
     });
 
-    const savedPlace = await newPlace.save();
+    console.log("[adminPlacesRoutes] Saving new place...");
+    const savedPlace = await newPlace.save({ timeout: 30000 }); // 30 second timeout
+    console.log("[adminPlacesRoutes] Place saved successfully:", savedPlace._id);
     res.status(201).json(savedPlace);
   } catch (error) {
     console.error("[adminPlacesRoutes] Error creating place:", error);

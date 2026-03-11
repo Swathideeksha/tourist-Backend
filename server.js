@@ -20,7 +20,12 @@ app.use('/uploads', express.static('uploads'));
 // Always attempt to connect when MONGO_URI is present (works on serverless too)
 if (process.env.MONGO_URI) {
   mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000, // 30 seconds
+      socketTimeoutMS: 45000, // 45 seconds
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false // Disable mongoose buffering
+    })
     .then(() => console.log("✅ MongoDB connected"))
     .catch((err) => console.error("MongoDB connection error ❌", err));
 }
