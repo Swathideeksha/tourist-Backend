@@ -12,10 +12,6 @@ const upload = multer({
   }
 });
 
-// Middleware to parse form data
-router.use(express.json());
-router.use(express.urlencoded({ extended: true }));
-
 // Get all places from database
 router.get("/", async (req, res) => {
   try {
@@ -61,7 +57,9 @@ router.post("/", upload.fields([
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
+    console.log("[adminPlacesRoutes] Request headers:", req.headers);
     console.log("[adminPlacesRoutes] Request files:", req.files);
+    console.log("[adminPlacesRoutes] Request content-type:", req.get('Content-Type'));
     
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
