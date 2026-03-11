@@ -12,6 +12,10 @@ const upload = multer({
   }
 });
 
+// Middleware to parse form data
+router.use(express.json());
+router.use(express.urlencoded({ extended: true }));
+
 // Get all places from database
 router.get("/", async (req, res) => {
   try {
