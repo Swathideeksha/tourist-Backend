@@ -63,7 +63,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Add new place
+// Add new place - handle both FormData and JSON with base64
 router.post("/", upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'images', maxCount: 6 }
@@ -73,35 +73,42 @@ router.post("/", upload.fields([
     console.log("[adminPlacesRoutes] Request body:", req.body);
     console.log("[adminPlacesRoutes] Request files:", req.files);
     
-    // Get form fields - handle both JSON and form data
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
-    
-    // Handle file uploads - convert to base64 data URLs
+    // Handle both FormData and JSON with base64
     let imageUrl = '';
     let imageGallery = [];
     
-    // Handle main image
-    if (req.files && req.files.image && req.files.image[0]) {
+    // Check if base64 images are sent in JSON (new method)
+    if (req.body.mainImageBase64) {
+      console.log("Processing base64 main image from JSON");
+      imageUrl = req.body.mainImageBase64;
+      console.log("Base64 main image length:", imageUrl.length);
+    }
+    
+    if (req.body.galleryImagesBase64 && Array.isArray(req.body.galleryImagesBase64)) {
+      console.log("Processing base64 gallery images from JSON");
+      imageGallery = req.body.galleryImagesBase64;
+      console.log("Base64 gallery images count:", imageGallery.length);
+    }
+    
+    // Handle file uploads (old method - fallback)
+    if (req.files && req.files.image && req.files.image[0] && !imageUrl) {
       const mainImage = req.files.image[0];
-      console.log("Processing main image:", mainImage.originalname, mainImage.mimetype, mainImage.size);
+      console.log("Processing main image from file:", mainImage.originalname, mainImage.mimetype, mainImage.size);
       
-      // Convert image to base64
       const base64Image = mainImage.buffer.toString('base64');
       const mimeType = mainImage.mimetype;
       imageUrl = `data:${mimeType};base64,${base64Image}`;
-      console.log("Main image converted to data URL, length:", imageUrl.length);
+      console.log("File image converted to data URL, length:", imageUrl.length);
     }
     
-    // Handle gallery images
-    if (req.files && req.files.images) {
+    if (req.files && req.files.images && imageGallery.length === 0) {
       imageGallery = req.files.images.map((file, index) => {
-        console.log(`Processing gallery image ${index}:`, file.originalname, file.mimetype, file.size);
+        console.log(`Processing gallery image ${index} from file:`, file.originalname, file.mimetype, file.size);
         
-        // Convert image to base64
         const base64Image = file.buffer.toString('base64');
         const mimeType = file.mimetype;
         const dataUrl = `data:${mimeType};base64,${base64Image}`;
-        console.log(`Gallery image ${index} converted to data URL, length:`, dataUrl.length);
+        console.log(`File gallery image ${index} converted to data URL, length:`, dataUrl.length);
         return dataUrl;
       });
     }
@@ -109,14 +116,17 @@ router.post("/", upload.fields([
     // If no images uploaded, use placeholders
     if (!imageUrl) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("No main image uploaded, using placeholder");
+      console.log("No main image provided, using placeholder");
     }
     if (imageGallery.length === 0) {
       for (let i = 0; i < 3; i++) {
         imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
-      console.log("No gallery images uploaded, using placeholders");
+      console.log("No gallery images provided, using placeholders");
     }
+    
+    // Get form fields
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
     const newPlace = new Place({
       name,
