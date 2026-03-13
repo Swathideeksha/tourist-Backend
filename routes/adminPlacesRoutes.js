@@ -63,24 +63,49 @@ router.post("/", upload.fields([
     
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
-    // Handle file uploads (temporary - using placeholder URLs)
-    let imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+    // Handle file uploads - save to public/uploads directory
+    let imageUrl = '';
     let imageGallery = [];
     
-    // Generate placeholder gallery images
-    for (let i = 0; i < 3; i++) {
-      imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+    // Create uploads directory if it doesn't exist
+    const fs = require('fs');
+    const path = require('path');
+    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
     }
     
-    // If actual files are uploaded in the future, they'll replace these
+    // Handle main image
     if (req.files && req.files.image && req.files.image[0]) {
+      const mainImage = req.files.image[0];
+      const mainImageName = `place-${Date.now()}-main${path.extname(mainImage.originalname)}`;
+      const mainImagePath = path.join(uploadsDir, mainImageName);
+      
+      // Write file to uploads directory
+      fs.writeFileSync(mainImagePath, mainImage.buffer);
+      imageUrl = `/uploads/${mainImageName}`;
+    }
+    
+    // Handle gallery images
+    if (req.files && req.files.images) {
+      imageGallery = req.files.images.map((file, index) => {
+        const galleryImageName = `place-${Date.now()}-gallery-${index}${path.extname(file.originalname)}`;
+        const galleryImagePath = path.join(uploadsDir, galleryImageName);
+        
+        // Write file to uploads directory
+        fs.writeFileSync(galleryImagePath, file.buffer);
+        return `/uploads/${galleryImageName}`;
+      });
+    }
+    
+    // If no images uploaded, use placeholders
+    if (!imageUrl) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
     }
-    
-    if (req.files && req.files.images) {
-      imageGallery = req.files.images.map((file, index) => 
-        `https://picsum.photos/seed/gallery-${Date.now()}-${index}/400/300.jpg`
-      );
+    if (imageGallery.length === 0) {
+      for (let i = 0; i < 3; i++) {
+        imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+      }
     }
     
     const newPlace = new Place({
