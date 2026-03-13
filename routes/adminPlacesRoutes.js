@@ -4,11 +4,25 @@ const mongoose = require("mongoose");
 const Place = require("../models/Place");
 const multer = require('multer');
 
-// Configure multer for memory storage (temporary fix)
+// Configure multer for memory storage with better field handling
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
+// Add middleware to handle both JSON and form data
+router.use((req, res, next) => {
+  if (req.is('multipart/form-data')) {
+    // For multipart form data, multer will handle it
+    next();
+  } else if (req.is('application/json')) {
+    // For JSON, body is already parsed
+    next();
+  } else {
+    // Try to parse as URL-encoded
+    express.urlencoded({ extended: true })(req, res, next);
   }
 });
 
@@ -57,43 +71,51 @@ router.post("/", upload.fields([
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
-    console.log("[adminPlacesRoutes] Request headers:", req.headers);
     console.log("[adminPlacesRoutes] Request files:", req.files);
-    console.log("[adminPlacesRoutes] Request content-type:", req.get('Content-Type'));
     
+    // Get form fields - handle both JSON and form data
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
-    // Handle file uploads - convert to base64 for storage
+    // Handle file uploads - convert to base64 data URLs
     let imageUrl = '';
     let imageGallery = [];
     
     // Handle main image
     if (req.files && req.files.image && req.files.image[0]) {
       const mainImage = req.files.image[0];
+      console.log("Processing main image:", mainImage.originalname, mainImage.mimetype, mainImage.size);
+      
       // Convert image to base64
       const base64Image = mainImage.buffer.toString('base64');
       const mimeType = mainImage.mimetype;
       imageUrl = `data:${mimeType};base64,${base64Image}`;
+      console.log("Main image converted to data URL, length:", imageUrl.length);
     }
     
     // Handle gallery images
     if (req.files && req.files.images) {
-      imageGallery = req.files.images.map((file) => {
+      imageGallery = req.files.images.map((file, index) => {
+        console.log(`Processing gallery image ${index}:`, file.originalname, file.mimetype, file.size);
+        
         // Convert image to base64
         const base64Image = file.buffer.toString('base64');
         const mimeType = file.mimetype;
-        return `data:${mimeType};base64,${base64Image}`;
+        const dataUrl = `data:${mimeType};base64,${base64Image}`;
+        console.log(`Gallery image ${index} converted to data URL, length:`, dataUrl.length);
+        return dataUrl;
       });
     }
     
     // If no images uploaded, use placeholders
     if (!imageUrl) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+      console.log("No main image uploaded, using placeholder");
     }
     if (imageGallery.length === 0) {
       for (let i = 0; i < 3; i++) {
         imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
+      console.log("No gallery images uploaded, using placeholders");
     }
     
     const newPlace = new Place({
