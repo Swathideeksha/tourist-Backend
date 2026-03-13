@@ -2,11 +2,12 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Place = require("../models/Place");
+const { cloudinary, storage } = require("../config/cloudinary");
 const multer = require('multer');
 
-// Configure multer for memory storage with better field handling
+// Configure multer to use Cloudinary storage
 const upload = multer({ 
-  storage: multer.memoryStorage(),
+  storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
@@ -67,7 +68,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Add new place - handle both FormData and JSON with base64
+// Add new place - use Cloudinary for image uploads
 router.post("/", upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'images', maxCount: 6 }
@@ -77,56 +78,37 @@ router.post("/", upload.fields([
     console.log("[adminPlacesRoutes] Request body:", req.body);
     console.log("[adminPlacesRoutes] Request files:", req.files);
     
-    // Handle both FormData and JSON with base64
+    // Handle Cloudinary uploaded images
     let imageUrl = '';
     let imageGallery = [];
     
-    // Check if base64 images are sent in JSON (new method)
-    if (req.body.mainImageBase64) {
-      console.log("Processing base64 main image from JSON");
-      imageUrl = req.body.mainImageBase64;
-      console.log("Base64 main image length:", imageUrl.length);
-    }
-    
-    if (req.body.galleryImagesBase64 && Array.isArray(req.body.galleryImagesBase64)) {
-      console.log("Processing base64 gallery images from JSON");
-      imageGallery = req.body.galleryImagesBase64;
-      console.log("Base64 gallery images count:", imageGallery.length);
-    }
-    
-    // Handle file uploads (old method - fallback)
-    if (req.files && req.files.image && req.files.image[0] && !imageUrl) {
+    // Handle main image uploaded to Cloudinary
+    if (req.files && req.files.image && req.files.image[0]) {
       const mainImage = req.files.image[0];
-      console.log("Processing main image from file:", mainImage.originalname, mainImage.mimetype, mainImage.size);
-      
-      const base64Image = mainImage.buffer.toString('base64');
-      const mimeType = mainImage.mimetype;
-      imageUrl = `data:${mimeType};base64,${base64Image}`;
-      console.log("File image converted to data URL, length:", imageUrl.length);
+      console.log("Main image uploaded to Cloudinary:", mainImage.filename);
+      imageUrl = mainImage.path; // Cloudinary URL
+      console.log("Main image Cloudinary URL:", imageUrl);
     }
     
-    if (req.files && req.files.images && imageGallery.length === 0) {
+    // Handle gallery images uploaded to Cloudinary
+    if (req.files && req.files.images) {
       imageGallery = req.files.images.map((file, index) => {
-        console.log(`Processing gallery image ${index} from file:`, file.originalname, file.mimetype, file.size);
-        
-        const base64Image = file.buffer.toString('base64');
-        const mimeType = file.mimetype;
-        const dataUrl = `data:${mimeType};base64,${base64Image}`;
-        console.log(`File gallery image ${index} converted to data URL, length:`, dataUrl.length);
-        return dataUrl;
+        console.log(`Gallery image ${index + 1} uploaded to Cloudinary:`, file.filename);
+        return file.path; // Cloudinary URL
       });
+      console.log("Gallery images Cloudinary URLs:", imageGallery);
     }
     
     // If no images uploaded, use placeholders
     if (!imageUrl) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("No main image provided, using placeholder");
+      console.log("No main image uploaded, using placeholder");
     }
     if (imageGallery.length === 0) {
       for (let i = 0; i < 3; i++) {
         imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
-      console.log("No gallery images provided, using placeholders");
+      console.log("No gallery images uploaded, using placeholders");
     }
     
     // Get form fields
@@ -172,9 +154,24 @@ router.put("/:id", upload.fields([
       return res.status(404).json({ message: "Place not found" });
     }
     
-    // Handle file uploads (temporary - using placeholder URLs)
+    // Handle Cloudinary image uploads
     let imageUrl = existingImage || existingPlace.image || `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
     let imageGallery = existingImages ? JSON.parse(existingImages) : existingPlace.images;
+    
+    // Handle new main image uploaded to Cloudinary
+    if (req.files && req.files.image && req.files.image[0]) {
+      const mainImage = req.files.image[0];
+      console.log("Updated main image uploaded to Cloudinary:", mainImage.filename);
+      imageUrl = mainImage.path; // Cloudinary URL
+    }
+    
+    // Handle new gallery images uploaded to Cloudinary
+    if (req.files && req.files.images) {
+      imageGallery = req.files.images.map((file, index) => {
+        console.log(`Updated gallery image ${index + 1} uploaded to Cloudinary:`, file.filename);
+        return file.path; // Cloudinary URL
+      });
+    }
     
     // Ensure we always have gallery images
     if (!imageGallery || imageGallery.length === 0) {
@@ -182,16 +179,6 @@ router.put("/:id", upload.fields([
       for (let i = 0; i < 3; i++) {
         imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
-    }
-    
-    if (req.files && req.files.image && req.files.image[0]) {
-      imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-    }
-    
-    if (req.files && req.files.images) {
-      imageGallery = req.files.images.map((file, index) => 
-        `https://picsum.photos/seed/gallery-${Date.now()}-${index}/400/300.jpg`
-      );
     }
     
     const updatedPlace = await Place.findByIdAndUpdate(
