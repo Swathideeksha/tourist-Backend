@@ -64,10 +64,15 @@ router.post("/", upload.fields([
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
     // Handle file uploads (temporary - using placeholder URLs)
-    let imageUrl = '';
+    let imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
     let imageGallery = [];
     
-    // For now, use placeholder URLs until Cloudinary is fixed
+    // Generate placeholder gallery images
+    for (let i = 0; i < 3; i++) {
+      imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+    }
+    
+    // If actual files are uploaded in the future, they'll replace these
     if (req.files && req.files.image && req.files.image[0]) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
     }
@@ -119,8 +124,16 @@ router.put("/:id", upload.fields([
     }
     
     // Handle file uploads (temporary - using placeholder URLs)
-    let imageUrl = existingImage || existingPlace.image;
+    let imageUrl = existingImage || existingPlace.image || `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
     let imageGallery = existingImages ? JSON.parse(existingImages) : existingPlace.images;
+    
+    // Ensure we always have gallery images
+    if (!imageGallery || imageGallery.length === 0) {
+      imageGallery = [];
+      for (let i = 0; i < 3; i++) {
+        imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+      }
+    }
     
     if (req.files && req.files.image && req.files.image[0]) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
