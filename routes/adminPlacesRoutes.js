@@ -63,38 +63,26 @@ router.post("/", upload.fields([
     
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
-    // Handle file uploads - save to public/uploads directory
+    // Handle file uploads - convert to base64 for storage
     let imageUrl = '';
     let imageGallery = [];
-    
-    // Create uploads directory if it doesn't exist
-    const fs = require('fs');
-    const path = require('path');
-    const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
     
     // Handle main image
     if (req.files && req.files.image && req.files.image[0]) {
       const mainImage = req.files.image[0];
-      const mainImageName = `place-${Date.now()}-main${path.extname(mainImage.originalname)}`;
-      const mainImagePath = path.join(uploadsDir, mainImageName);
-      
-      // Write file to uploads directory
-      fs.writeFileSync(mainImagePath, mainImage.buffer);
-      imageUrl = `/uploads/${mainImageName}`;
+      // Convert image to base64
+      const base64Image = mainImage.buffer.toString('base64');
+      const mimeType = mainImage.mimetype;
+      imageUrl = `data:${mimeType};base64,${base64Image}`;
     }
     
     // Handle gallery images
     if (req.files && req.files.images) {
-      imageGallery = req.files.images.map((file, index) => {
-        const galleryImageName = `place-${Date.now()}-gallery-${index}${path.extname(file.originalname)}`;
-        const galleryImagePath = path.join(uploadsDir, galleryImageName);
-        
-        // Write file to uploads directory
-        fs.writeFileSync(galleryImagePath, file.buffer);
-        return `/uploads/${galleryImageName}`;
+      imageGallery = req.files.images.map((file) => {
+        // Convert image to base64
+        const base64Image = file.buffer.toString('base64');
+        const mimeType = file.mimetype;
+        return `data:${mimeType};base64,${base64Image}`;
       });
     }
     
