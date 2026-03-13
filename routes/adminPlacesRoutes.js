@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
 const Place = require("../models/Place");
-const { cloudinary, storage } = require("../config/cloudinary");
+const { cloudinary } = require("../config/cloudinary");
 const multer = require('multer');
 
-// Configure multer to use Cloudinary storage
+// Use regular multer for memory storage to handle both form fields and files
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
@@ -68,7 +68,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Add new place - use Cloudinary for image uploads
+// Add new place - handle form fields and upload to Cloudinary manually
 router.post("/", upload.fields([
   { name: 'image', maxCount: 1 },
   { name: 'images', maxCount: 6 }
@@ -78,25 +78,69 @@ router.post("/", upload.fields([
     console.log("[adminPlacesRoutes] Request body:", req.body);
     console.log("[adminPlacesRoutes] Request files:", req.files);
     
-    // Handle Cloudinary uploaded images
+    // Get form fields
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
+    
+    // Handle Cloudinary image uploads
     let imageUrl = '';
     let imageGallery = [];
     
-    // Handle main image uploaded to Cloudinary
+    // Upload main image to Cloudinary
     if (req.files && req.files.image && req.files.image[0]) {
-      const mainImage = req.files.image[0];
-      console.log("Main image uploaded to Cloudinary:", mainImage.filename);
-      imageUrl = mainImage.path; // Cloudinary URL
-      console.log("Main image Cloudinary URL:", imageUrl);
+      try {
+        const mainImage = req.files.image[0];
+        console.log("Uploading main image to Cloudinary:", mainImage.originalname);
+        
+        const result = await new Promise((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            { 
+              folder: 'tourist-website',
+              resource_type: 'image',
+              public_id: `place-${Date.now()}-main`
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          ).end(mainImage.buffer);
+        });
+        
+        imageUrl = result.secure_url;
+        console.log("Main image uploaded to Cloudinary:", imageUrl);
+      } catch (error) {
+        console.error("Error uploading main image to Cloudinary:", error);
+        imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+      }
     }
     
-    // Handle gallery images uploaded to Cloudinary
+    // Upload gallery images to Cloudinary
     if (req.files && req.files.images) {
-      imageGallery = req.files.images.map((file, index) => {
-        console.log(`Gallery image ${index + 1} uploaded to Cloudinary:`, file.filename);
-        return file.path; // Cloudinary URL
-      });
-      console.log("Gallery images Cloudinary URLs:", imageGallery);
+      for (let i = 0; i < req.files.images.length; i++) {
+        try {
+          const galleryImage = req.files.images[i];
+          console.log(`Uploading gallery image ${i + 1} to Cloudinary:`, galleryImage.originalname);
+          
+          const result = await new Promise((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+              { 
+                folder: 'tourist-website',
+                resource_type: 'image',
+                public_id: `place-${Date.now()}-gallery-${i}`
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            ).end(galleryImage.buffer);
+          });
+          
+          imageGallery.push(result.secure_url);
+          console.log(`Gallery image ${i + 1} uploaded to Cloudinary:`, result.secure_url);
+        } catch (error) {
+          console.error(`Error uploading gallery image ${i + 1} to Cloudinary:`, error);
+          imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+        }
+      }
     }
     
     // If no images uploaded, use placeholders
@@ -110,9 +154,6 @@ router.post("/", upload.fields([
       }
       console.log("No gallery images uploaded, using placeholders");
     }
-    
-    // Get form fields
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
     const newPlace = new Place({
       name,
