@@ -68,92 +68,45 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Add new place - handle form fields and upload to Cloudinary manually
-router.post("/", upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'images', maxCount: 6 }
-]), async (req, res) => {
+// Add new place - handle JSON with base64 fallback (working solution)
+router.post("/", async (req, res) => {
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
-    console.log("[adminPlacesRoutes] Request files:", req.files);
     
     // Get form fields
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach, mainImageBase64, galleryImagesBase64 } = req.body;
     
-    // Handle Cloudinary image uploads
+    // Handle images - check for base64 first, then use placeholders
     let imageUrl = '';
     let imageGallery = [];
     
-    // Upload main image to Cloudinary
-    if (req.files && req.files.image && req.files.image[0]) {
-      try {
-        const mainImage = req.files.image[0];
-        console.log("Uploading main image to Cloudinary:", mainImage.originalname);
-        
-        const result = await new Promise((resolve, reject) => {
-          cloudinary.uploader.upload_stream(
-            { 
-              folder: 'tourist-website',
-              resource_type: 'image',
-              public_id: `place-${Date.now()}-main`
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else resolve(result);
-            }
-          ).end(mainImage.buffer);
-        });
-        
-        imageUrl = result.secure_url;
-        console.log("Main image uploaded to Cloudinary:", imageUrl);
-      } catch (error) {
-        console.error("Error uploading main image to Cloudinary:", error);
-        imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      }
+    // Handle base64 main image
+    if (mainImageBase64) {
+      console.log("Using base64 main image");
+      imageUrl = mainImageBase64;
     }
     
-    // Upload gallery images to Cloudinary
-    if (req.files && req.files.images) {
-      for (let i = 0; i < req.files.images.length; i++) {
-        try {
-          const galleryImage = req.files.images[i];
-          console.log(`Uploading gallery image ${i + 1} to Cloudinary:`, galleryImage.originalname);
-          
-          const result = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream(
-              { 
-                folder: 'tourist-website',
-                resource_type: 'image',
-                public_id: `place-${Date.now()}-gallery-${i}`
-              },
-              (error, result) => {
-                if (error) reject(error);
-                else resolve(result);
-              }
-            ).end(galleryImage.buffer);
-          });
-          
-          imageGallery.push(result.secure_url);
-          console.log(`Gallery image ${i + 1} uploaded to Cloudinary:`, result.secure_url);
-        } catch (error) {
-          console.error(`Error uploading gallery image ${i + 1} to Cloudinary:`, error);
-          imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
-        }
-      }
+    // Handle base64 gallery images
+    if (galleryImagesBase64 && Array.isArray(galleryImagesBase64)) {
+      console.log("Using base64 gallery images");
+      imageGallery = galleryImagesBase64;
     }
     
-    // If no images uploaded, use placeholders
+    // If no images provided, use placeholders
     if (!imageUrl) {
       imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("No main image uploaded, using placeholder");
+      console.log("No main image provided, using placeholder");
     }
     if (imageGallery.length === 0) {
       for (let i = 0; i < 3; i++) {
         imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
-      console.log("No gallery images uploaded, using placeholders");
+      console.log("No gallery images provided, using placeholders");
     }
+    
+    console.log("Final image URL:", imageUrl);
+    console.log("Gallery images count:", imageGallery.length);
     
     const newPlace = new Place({
       name,
