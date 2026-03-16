@@ -14,8 +14,8 @@ const upload = multer({
 });
 
 // Increase payload limit for JSON requests (handle larger base64 payloads)
-router.use(express.json({ limit: '100mb' }));
-router.use(express.urlencoded({ limit: '100mb', extended: true }));
+router.use(express.json({ limit: '50mb' }));
+router.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Add middleware to handle both JSON and form data
 router.use((req, res, next) => {
