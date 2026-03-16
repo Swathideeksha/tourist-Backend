@@ -68,66 +68,70 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Add new place - handle JSON with base64 fallback (working solution)
-router.post("/", async (req, res) => {
+// Add new place - handle FormData uploads
+router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
+    console.log("[adminPlacesRoutes] Files:", req.files);
     
-    // Get form fields
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach, mainImageBase64, galleryImagesBase64 } = req.body;
+    // Get form fields from FormData
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
-    // Handle images - check for base64 first, then use placeholders
-    let imageUrl = '';
-    let imageGallery = [];
-    
-    // Handle base64 main image
-    if (mainImageBase64) {
-      console.log("Using base64 main image");
-      imageUrl = mainImageBase64;
+    // Handle main image
+    let mainImageUrl = '';
+    if (req.files && req.files.image && req.files.image[0]) {
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(req.files.image[0].buffer, {
+        folder: 'tourist-places',
+        resource_type: 'auto',
+      });
+      mainImageUrl = result.secure_url;
+      console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
     }
     
-    // Handle base64 gallery images
-    if (galleryImagesBase64 && Array.isArray(galleryImagesBase64)) {
-      console.log("Using base64 gallery images");
-      imageGallery = galleryImagesBase64;
-    }
-    
-    // If no images provided, use placeholders
-    if (!imageUrl) {
-      imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("No main image provided, using placeholder");
-    }
-    if (imageGallery.length === 0) {
-      for (let i = 0; i < 3; i++) {
-        imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+    // Handle gallery images
+    let galleryImages = [];
+    if (req.files && req.files.images) {
+      const galleryFiles = req.files.images;
+      
+      for (const file of galleryFiles) {
+        if (file && file.buffer) {
+          const result = await cloudinary.uploader.upload(file.buffer, {
+            folder: 'tourist-places/gallery',
+            resource_type: 'auto',
+          });
+          galleryImages.push(result.secure_url);
+          console.log("[adminPlacesRoutes] Gallery image uploaded to Cloudinary:", result.secure_url);
+        }
       }
-      console.log("No gallery images provided, using placeholders");
     }
     
-    console.log("Final image URL:", imageUrl);
-    console.log("Gallery images count:", imageGallery.length);
-    
-    const newPlace = new Place({
+    // Create place with Cloudinary URLs
+    const placeData = {
       name,
       location,
-      image: imageUrl,
-      images: imageGallery,
       category,
       description,
       bestTime,
       temperature,
-      rating: rating || 0,
-      isActive: isActive !== undefined ? isActive === 'true' : true,
-      placesToVisit: placesToVisit ? placesToVisit.split('\n').filter(p => p.trim()) : [],
-      nearbyFacilities: nearbyFacilities ? nearbyFacilities.split('\n').filter(f => f.trim()) : [],
-      howToReach: howToReach || ''
-    });
-
-    console.log("[adminPlacesRoutes] Saving new place...");
-    const savedPlace = await newPlace.save({ timeout: 30000 }); // 30 second timeout
-    console.log("[adminPlacesRoutes] Place saved successfully:", savedPlace._id);
-    res.status(201).json(savedPlace);
+      rating,
+      isActive: isActive || 'true',
+      placesToVisit: placesToVisit ? placesToVisit.split(',').map(p => p.trim()) : [],
+      nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(f => f.trim()) : [],
+      howToReach: howToReach ? howToReach.split(',').map(h => h.trim()) : [],
+      image: mainImageUrl,
+      images: galleryImages
+    };
+    
+    console.log("[adminPlacesRoutes] Creating place with data:", { ...placeData, image: !!mainImageUrl, images: galleryImages.length });
+    
+    const newPlace = new Place(placeData);
+    await newPlace.save();
+    
+    console.log("[adminPlacesRoutes] Place created successfully:", newPlace._id);
+    res.status(201).json(newPlace);
+    
   } catch (error) {
     console.error("[adminPlacesRoutes] Error creating place:", error);
     res.status(500).json({ message: "Server error", error: error.message });
