@@ -153,7 +153,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       isActive: isActive || 'true',
       placesToVisit: placesToVisit ? placesToVisit.split(',').map(p => p.trim()) : [],
       nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(f => f.trim()) : [],
-      howToReach: howToReach ? howToReach.split(',').map(h => h.trim()) : [],
+      howToReach: howToReach || '', // Keep as string, not array
       image: mainImageUrl,
       images: galleryImages
     };
