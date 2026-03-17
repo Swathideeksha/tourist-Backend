@@ -81,8 +81,12 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     // Handle main image
     let mainImageUrl = '';
     if (req.files && req.files.image && req.files.image[0]) {
+      // Convert Buffer to data URI for Cloudinary
+      const fileBuffer = req.files.image[0].buffer;
+      const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+      
       // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(req.files.image[0].buffer, {
+      const result = await cloudinary.uploader.upload(dataURI, {
         folder: 'tourist-places',
         resource_type: 'auto',
       });
@@ -97,7 +101,10 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       
       for (const file of galleryFiles) {
         if (file && file.buffer) {
-          const result = await cloudinary.uploader.upload(file.buffer, {
+          // Convert Buffer to data URI for Cloudinary
+          const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+          
+          const result = await cloudinary.uploader.upload(dataURI, {
             folder: 'tourist-places/gallery',
             resource_type: 'auto',
           });
