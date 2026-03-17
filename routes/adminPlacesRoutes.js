@@ -73,43 +73,70 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
-    console.log("[adminPlacesRoutes] Files:", req.files);
+    console.log("[adminPlacesRoutes] Files received:", req.files ? Object.keys(req.files) : 'none');
     
     // Get form fields from FormData
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
+    console.log("[adminPlacesRoutes] Parsed form data:", {
+      name,
+      location,
+      category,
+      hasDescription: !!description,
+      bestTime,
+      isActive
+    });
+    
     // Handle main image
     let mainImageUrl = '';
     if (req.files && req.files.image && req.files.image[0]) {
-      // Convert Buffer to data URI for Cloudinary
-      const fileBuffer = req.files.image[0].buffer;
-      const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
-      
-      // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(dataURI, {
-        folder: 'tourist-places',
-        resource_type: 'auto',
-      });
-      mainImageUrl = result.secure_url;
-      console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
+      try {
+        console.log("[adminPlacesRoutes] Processing main image:", req.files.image[0].mimetype, req.files.image[0].size);
+        
+        // Convert Buffer to data URI for Cloudinary
+        const fileBuffer = req.files.image[0].buffer;
+        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+        
+        console.log("[adminPlacesRoutes] Uploading main image to Cloudinary...");
+        // Upload to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        mainImageUrl = result.secure_url;
+        console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
+      } catch (cloudinaryError) {
+        console.error("[adminPlacesRoutes] Cloudinary main image error:", cloudinaryError);
+        // Continue without main image
+      }
     }
     
     // Handle gallery images
     let galleryImages = [];
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
+      console.log("[adminPlacesRoutes] Processing", galleryFiles.length, "gallery images");
       
-      for (const file of galleryFiles) {
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const file = galleryFiles[i];
         if (file && file.buffer) {
-          // Convert Buffer to data URI for Cloudinary
-          const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-          
-          const result = await cloudinary.uploader.upload(dataURI, {
-            folder: 'tourist-places/gallery',
-            resource_type: 'auto',
-          });
-          galleryImages.push(result.secure_url);
-          console.log("[adminPlacesRoutes] Gallery image uploaded to Cloudinary:", result.secure_url);
+          try {
+            console.log(`[adminPlacesRoutes] Processing gallery image ${i + 1}:`, file.mimetype, file.size);
+            
+            // Convert Buffer to data URI for Cloudinary
+            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            
+            console.log(`[adminPlacesRoutes] Uploading gallery image ${i + 1} to Cloudinary...`);
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            galleryImages.push(result.secure_url);
+            console.log(`[adminPlacesRoutes] Gallery image ${i + 1} uploaded to Cloudinary:`, result.secure_url);
+          } catch (cloudinaryError) {
+            console.error(`[adminPlacesRoutes] Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
+            // Continue with next image
+          }
         }
       }
     }
@@ -131,7 +158,11 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       images: galleryImages
     };
     
-    console.log("[adminPlacesRoutes] Creating place with data:", { ...placeData, image: !!mainImageUrl, images: galleryImages.length });
+    console.log("[adminPlacesRoutes] Creating place with data:", { 
+      ...placeData, 
+      image: !!mainImageUrl, 
+      images: galleryImages.length 
+    });
     
     const newPlace = new Place(placeData);
     await newPlace.save();
@@ -141,7 +172,12 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     
   } catch (error) {
     console.error("[adminPlacesRoutes] Error creating place:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("[adminPlacesRoutes] Error stack:", error.stack);
+    res.status(500).json({ 
+      message: "Server error", 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 });
 
