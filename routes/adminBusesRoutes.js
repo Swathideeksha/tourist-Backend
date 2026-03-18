@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Bus = require("../models/Bus");
 
 // Get all buses from database
