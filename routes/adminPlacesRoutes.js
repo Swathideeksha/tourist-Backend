@@ -75,6 +75,15 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     console.log("[adminPlacesRoutes] Request body:", req.body);
     console.log("[adminPlacesRoutes] Files received:", req.files ? Object.keys(req.files) : 'none');
     
+    if (req.files) {
+      console.log("[adminPlacesRoutes] req.files structure:", {
+        image: req.files.image ? req.files.image.length + ' files' : 'none',
+        images: req.files.images ? req.files.images.length + ' files' : 'none',
+        imageDetails: req.files.image ? req.files.image.map(f => ({ name: f.originalname, size: f.size, mimetype: f.mimetype })) : 'none',
+        imagesDetails: req.files.images ? req.files.images.map(f => ({ name: f.originalname, size: f.size, mimetype: f.mimetype })) : 'none'
+      });
+    }
+    
     // Get form fields from FormData
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
