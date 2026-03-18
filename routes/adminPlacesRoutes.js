@@ -70,6 +70,11 @@ router.get("/:id", async (req, res) => {
 
 // Add new place - handle FormData uploads
 router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
+  console.log("🔍 BACKEND: POST route hit!");
+  console.log("🔍 BACKEND: Request headers:", Object.fromEntries(req.headers.entries()));
+  console.log("🔍 BACKEND: Content-Type:", req.get('Content-Type'));
+  console.log("🔍 BACKEND: Content-Length:", req.get('Content-Length'));
+  
   try {
     console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
     console.log("[adminPlacesRoutes] Request body:", req.body);
