@@ -158,6 +158,12 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       images: galleryImages
     };
     
+    console.log("[adminPlacesRoutes] Final place data being saved:", {
+      mainImageUrl,
+      galleryImages,
+      placeData
+    });
+    
     console.log("[adminPlacesRoutes] Creating place with data:", { 
       ...placeData, 
       image: !!mainImageUrl, 
