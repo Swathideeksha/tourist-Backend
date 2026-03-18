@@ -104,36 +104,11 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     // Handle main image
     let mainImageUrl = '';
     if (req.files && req.files.image && req.files.image[0]) {
-      try {
-        console.log("[adminPlacesRoutes] Processing main image:", req.files.image[0].mimetype, req.files.image[0].size);
-        
-        // Convert Buffer to data URI for Cloudinary
-        const fileBuffer = req.files.image[0].buffer;
-        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
-        
-        console.log("[adminPlacesRoutes] Uploading main image to Cloudinary...");
-        console.log("[adminPlacesRoutes] Cloudinary config check:", {
-          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-          api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT_SET'
-        });
-        
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: 'tourist-places',
-          resource_type: 'auto',
-        });
-        mainImageUrl = result.secure_url;
-        console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
-        console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
-      } catch (cloudinaryError) {
-        console.error("[adminPlacesRoutes] Cloudinary main image error:", cloudinaryError);
-        console.error("[adminPlacesRoutes] Cloudinary error details:", {
-          message: cloudinaryError.message,
-          stack: cloudinaryError.stack,
-          name: cloudinaryError.name
-        });
-        // Continue without main image
-      }
+      console.log("[adminPlacesRoutes] Processing main image:", req.files.image[0].mimetype, req.files.image[0].size);
+      
+      // TEMPORARILY USE PLACEHOLDER URL TO TEST BASIC FUNCTIONALITY
+      mainImageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+      console.log("[adminPlacesRoutes] Using placeholder image:", mainImageUrl);
     }
     
     // Handle gallery images
@@ -141,38 +116,12 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       console.log("[adminPlacesRoutes] Processing", galleryFiles.length, "gallery images");
-      console.log("[adminPlacesRoutes] Cloudinary config check for gallery:", {
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT_SET'
-      });
       
+      // TEMPORARILY USE PLACEHOLDER URLS TO TEST BASIC FUNCTIONALITY
       for (let i = 0; i < galleryFiles.length; i++) {
-        const file = galleryFiles[i];
-        if (file && file.buffer) {
-          try {
-            console.log(`[adminPlacesRoutes] Processing gallery image ${i + 1}:`, file.mimetype, file.size);
-            
-            // Convert Buffer to data URI for Cloudinary
-            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-            
-            console.log(`[adminPlacesRoutes] Uploading gallery image ${i + 1} to Cloudinary...`);
-            const result = await cloudinary.uploader.upload(dataURI, {
-              folder: 'tourist-places/gallery',
-              resource_type: 'auto',
-            });
-            galleryImages.push(result.secure_url);
-            console.log(`[adminPlacesRoutes] Gallery image ${i + 1} uploaded to Cloudinary:`, result.secure_url);
-          } catch (cloudinaryError) {
-            console.error(`[adminPlacesRoutes] Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
-            console.error(`[adminPlacesRoutes] Gallery image ${i + 1} error details:`, {
-              message: cloudinaryError.message,
-              stack: cloudinaryError.stack,
-              name: cloudinaryError.name
-            });
-            // Continue with next image
-          }
-        }
+        galleryImages.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
+      console.log("[adminPlacesRoutes] Using placeholder gallery images:", galleryImages);
     }
     
     // Create place with Cloudinary URLs
