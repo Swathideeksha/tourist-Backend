@@ -80,14 +80,8 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     console.log("[adminPlacesRoutes] Request body:", req.body);
     console.log("[adminPlacesRoutes] Files received:", req.files ? Object.keys(req.files) : 'none');
     
-    if (req.files) {
-      console.log("[adminPlacesRoutes] req.files structure:", {
-        image: req.files.image ? req.files.image.length + ' files' : 'none',
-        images: req.files.images ? req.files.images.length + ' files' : 'none',
-        imageDetails: req.files.image ? req.files.image.map(f => ({ name: f.originalname, size: f.size, mimetype: f.mimetype })) : 'none',
-        imagesDetails: req.files.images ? req.files.images.map(f => ({ name: f.originalname, size: f.size, mimetype: f.mimetype })) : 'none'
-      });
-    }
+    // TEMPORARILY SKIP ALL FILE PROCESSING TO TEST BASIC FUNCTIONALITY
+    console.log("[adminPlacesRoutes] Skipping file processing for testing");
     
     // Get form fields from FormData
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
@@ -101,30 +95,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       isActive
     });
     
-    // Handle main image
-    let mainImageUrl = '';
-    if (req.files && req.files.image && req.files.image[0]) {
-      console.log("[adminPlacesRoutes] Processing main image:", req.files.image[0].mimetype, req.files.image[0].size);
-      
-      // TEMPORARILY USE PLACEHOLDER URL TO TEST BASIC FUNCTIONALITY
-      mainImageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("[adminPlacesRoutes] Using placeholder image:", mainImageUrl);
-    }
-    
-    // Handle gallery images
-    let galleryImages = [];
-    if (req.files && req.files.images) {
-      const galleryFiles = req.files.images;
-      console.log("[adminPlacesRoutes] Processing", galleryFiles.length, "gallery images");
-      
-      // TEMPORARILY USE PLACEHOLDER URLS TO TEST BASIC FUNCTIONALITY
-      for (let i = 0; i < galleryFiles.length; i++) {
-        galleryImages.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
-      }
-      console.log("[adminPlacesRoutes] Using placeholder gallery images:", galleryImages);
-    }
-    
-    // Create place with Cloudinary URLs
+    // Create place with placeholder images (no file processing)
     const placeData = {
       name,
       location,
@@ -137,20 +108,17 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       placesToVisit: placesToVisit ? placesToVisit.split(',').map(p => p.trim()) : [],
       nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(f => f.trim()) : [],
       howToReach: howToReach || '', // Keep as string, not array
-      image: mainImageUrl,
-      images: galleryImages
+      image: `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`,
+      images: [
+        `https://picsum.photos/seed/gallery-${Date.now()}-0/400/300.jpg`,
+        `https://picsum.photos/seed/gallery-${Date.now()}-1/400/300.jpg`
+      ]
     };
     
-    console.log("[adminPlacesRoutes] Final place data being saved:", {
-      mainImageUrl,
-      galleryImages,
-      placeData
-    });
-    
-    console.log("[adminPlacesRoutes] Creating place with data:", { 
+    console.log("[adminPlacesRoutes] Creating place with placeholder images:", { 
       ...placeData, 
-      image: !!mainImageUrl, 
-      images: galleryImages.length 
+      image: !!placeData.image, 
+      images: placeData.images.length 
     });
     
     const newPlace = new Place(placeData);
