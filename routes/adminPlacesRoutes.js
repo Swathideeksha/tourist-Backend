@@ -113,6 +113,11 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
         console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
       } catch (cloudinaryError) {
         console.error("[adminPlacesRoutes] Cloudinary main image error:", cloudinaryError);
+        console.error("[adminPlacesRoutes] Cloudinary error details:", {
+          message: cloudinaryError.message,
+          stack: cloudinaryError.stack,
+          name: cloudinaryError.name
+        });
         // Continue without main image
       }
     }
@@ -145,6 +150,11 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
             console.log(`[adminPlacesRoutes] Gallery image ${i + 1} uploaded to Cloudinary:`, result.secure_url);
           } catch (cloudinaryError) {
             console.error(`[adminPlacesRoutes] Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
+            console.error(`[adminPlacesRoutes] Gallery image ${i + 1} error details:`, {
+              message: cloudinaryError.message,
+              stack: cloudinaryError.stack,
+              name: cloudinaryError.name
+            });
             // Continue with next image
           }
         }
