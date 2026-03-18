@@ -223,10 +223,18 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
   } catch (error) {
     console.error("[adminPlacesRoutes] Error creating place:", error);
     console.error("[adminPlacesRoutes] Error stack:", error.stack);
+    console.error("[adminPlacesRoutes] Error details:", {
+      message: error.message,
+      name: error.name,
+      stack: error.stack
+    });
+    
+    // Return detailed error for debugging
     res.status(500).json({ 
       message: "Server error", 
       error: error.message,
-      stack: error.stack 
+      stack: error.stack,
+      details: "Check Vercel function logs for complete error trace"
     });
   }
 });
