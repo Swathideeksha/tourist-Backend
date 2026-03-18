@@ -184,6 +184,16 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     await newPlace.save();
     
     console.log("[adminPlacesRoutes] Place created successfully:", newPlace._id);
+    console.log("[adminPlacesRoutes] Saved place image data:", {
+      _id: newPlace._id,
+      name: newPlace.name,
+      image: newPlace.image,
+      images: newPlace.images,
+      imageType: typeof newPlace.image,
+      imagesType: typeof newPlace.images,
+      imagesLength: newPlace.images?.length || 0
+    });
+    
     res.status(201).json(newPlace);
     
   } catch (error) {
