@@ -98,12 +98,18 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
         const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
         
         console.log("[adminPlacesRoutes] Uploading main image to Cloudinary...");
+        console.log("[adminPlacesRoutes] Cloudinary config check:", {
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT_SET'
+        });
+        
         // Upload to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: 'tourist-places',
           resource_type: 'auto',
         });
         mainImageUrl = result.secure_url;
+        console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
         console.log("[adminPlacesRoutes] Main image uploaded to Cloudinary:", mainImageUrl);
       } catch (cloudinaryError) {
         console.error("[adminPlacesRoutes] Cloudinary main image error:", cloudinaryError);
@@ -116,6 +122,10 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       console.log("[adminPlacesRoutes] Processing", galleryFiles.length, "gallery images");
+      console.log("[adminPlacesRoutes] Cloudinary config check for gallery:", {
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT_SET'
+      });
       
       for (let i = 0; i < galleryFiles.length; i++) {
         const file = galleryFiles[i];
