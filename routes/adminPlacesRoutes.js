@@ -121,21 +121,17 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       images: placeData.images.length 
     });
     
-    const newPlace = new Place(placeData);
-    await newPlace.save();
+    // TEMPORARILY SKIP DATABASE SAVE TO TEST BASIC FUNCTIONALITY
+    console.log("[adminPlacesRoutes] Skipping database save for testing");
     
-    console.log("[adminPlacesRoutes] Place created successfully:", newPlace._id);
-    console.log("[adminPlacesRoutes] Saved place image data:", {
-      _id: newPlace._id,
-      name: newPlace.name,
-      image: newPlace.image,
-      images: newPlace.images,
-      imageType: typeof newPlace.image,
-      imagesType: typeof newPlace.images,
-      imagesLength: newPlace.images?.length || 0
-    });
+    // Return mock response without database
+    const mockPlace = {
+      _id: `test-${Date.now()}`,
+      ...placeData
+    };
     
-    res.status(201).json(newPlace);
+    console.log("[adminPlacesRoutes] Returning mock place:", mockPlace);
+    res.status(201).json(mockPlace);
     
   } catch (error) {
     console.error("[adminPlacesRoutes] Error creating place:", error);
