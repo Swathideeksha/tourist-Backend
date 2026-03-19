@@ -1,6 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const Place = require("../models/Place");
+const { cloudinary } = require("../config/cloudinary");
+const multer = require('multer');
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
 
 // GET /api/places-management - Get all places
 router.get("/", async (req, res) => {
@@ -28,24 +37,60 @@ router.get("/:id", async (req, res) => {
 });
 
 // POST /api/places-management - Create new place
-router.post("/", async (req, res) => {
+router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
   try {
-    console.log("[PLACES-MANAGEMENT] POST request received:", req.body);
-    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
+    console.log("[PLACES-MANAGEMENT] POST request received");
+    let imageUrl = "";
+    let imageGallery = [];
+
+    if (req.files && req.files.image && req.files.image[0]) {
+      try {
+        const fileBuffer = req.files.image[0].buffer;
+        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        imageUrl = result.secure_url;
+      } catch (err) {
+        console.error("Cloudinary main image error:", err);
+      }
+    }
+
+    if (req.files && req.files.images) {
+      const galleryFiles = req.files.images;
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const file = galleryFiles[i];
+        if (file && file.buffer) {
+          try {
+            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            imageGallery.push(result.secure_url);
+          } catch (err) {
+            console.error(`Cloudinary gallery image ${i + 1} error:`, err);
+          }
+        }
+      }
+    }
+
+    const { name, location, description, category, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
 
     const place = new Place({
       name,
       location,
       description,
       category,
-      image,
-      images: images || [],
+      image: imageUrl,
+      images: imageGallery,
       rating: rating || 0,
       reviewsCount: reviewsCount || 0,
       savedCount: savedCount || 0,
-      isActive: isActive !== undefined ? isActive : true,
-      placesToVisit: placesToVisit || [],
-      nearbyFacilities: nearbyFacilities || [],
+      isActive: isActive !== undefined ? isActive === 'true' : true,
+      placesToVisit: placesToVisit ? placesToVisit.split('\n').filter(p => p.trim()) : [],
+      nearbyFacilities: nearbyFacilities ? nearbyFacilities.split('\n').filter(p => p.trim()) : [],
       howToReach: howToReach || "",
     });
 
@@ -59,9 +104,45 @@ router.post("/", async (req, res) => {
 });
 
 // PUT /api/places-management/:id - Update place
-router.put("/:id", async (req, res) => {
+router.put("/:id", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
   try {
-    const { name, location, description, category, image, images, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
+    const { name, location, description, category, rating, reviewsCount, savedCount, isActive, placesToVisit, nearbyFacilities, howToReach, existingImage, existingImages } = req.body;
+
+    let imageUrl = existingImage || "";
+    let imageGallery = existingImages ? JSON.parse(existingImages) : [];
+
+    if (req.files && req.files.image && req.files.image[0]) {
+      try {
+        const fileBuffer = req.files.image[0].buffer;
+        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        imageUrl = result.secure_url;
+      } catch (err) {
+        console.error("Cloudinary main image error:", err);
+      }
+    }
+
+    if (req.files && req.files.images) {
+      const galleryFiles = req.files.images;
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const file = galleryFiles[i];
+        if (file && file.buffer) {
+          try {
+            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            imageGallery.push(result.secure_url);
+          } catch (err) {
+            console.error(`Cloudinary gallery image ${i + 1} error:`, err);
+          }
+        }
+      }
+    }
 
     const place = await Place.findByIdAndUpdate(
       req.params.id,
@@ -70,14 +151,14 @@ router.put("/:id", async (req, res) => {
         location,
         description,
         category,
-        image,
-        images: images || [],
-        rating,
-        reviewsCount,
-        savedCount,
-        isActive,
-        placesToVisit: placesToVisit || [],
-        nearbyFacilities: nearbyFacilities || [],
+        image: imageUrl,
+        images: imageGallery,
+        rating: rating || 0,
+        reviewsCount: reviewsCount || 0,
+        savedCount: savedCount || 0,
+        isActive: isActive !== undefined ? isActive === 'true' : true,
+        placesToVisit: placesToVisit ? placesToVisit.split('\n').filter(p => p.trim()) : [],
+        nearbyFacilities: nearbyFacilities ? nearbyFacilities.split('\n').filter(p => p.trim()) : [],
         howToReach: howToReach || "",
       },
       { new: true, runValidators: true }
