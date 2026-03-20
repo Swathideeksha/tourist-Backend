@@ -70,84 +70,68 @@ router.get("/:id", async (req, res) => {
 
 // Add new place - handle FormData uploads
 router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
-  console.log("🔍 BACKEND: POST route hit!");
-  console.log("🔍 BACKEND: Request headers:", Object.fromEntries(req.headers.entries()));
-  console.log("🔍 BACKEND: Content-Type:", req.get('Content-Type'));
-  console.log("🔍 BACKEND: Content-Length:", req.get('Content-Length'));
-  
   try {
-    console.log("[adminPlacesRoutes] POST /api/admin/places - Creating new place");
-    console.log("[adminPlacesRoutes] Request body:", req.body);
-    console.log("[adminPlacesRoutes] Files received:", req.files ? Object.keys(req.files) : 'none');
-    
-    // TEMPORARILY SKIP ALL FILE PROCESSING TO TEST BASIC FUNCTIONALITY
-    console.log("[adminPlacesRoutes] Skipping file processing for testing");
-    
-    // Get form fields from FormData
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
-    console.log("[adminPlacesRoutes] Parsed form data:", {
-      name,
-      location,
-      category,
-      hasDescription: !!description,
-      bestTime,
-      isActive
-    });
-    
-    // Create place with placeholder images (no file processing)
-    const placeData = {
+    let imageUrl = "";
+    let imageGallery = [];
+
+    if (req.files && req.files.image && req.files.image[0]) {
+      try {
+        const fileBuffer = req.files.image[0].buffer;
+        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        imageUrl = result.secure_url;
+      } catch (err) {
+        console.error("Cloudinary main image error:", err);
+      }
+    }
+
+    if (req.files && req.files.images) {
+      const galleryFiles = req.files.images;
+      for (let i = 0; i < galleryFiles.length; i++) {
+        const file = galleryFiles[i];
+        if (file && file.buffer) {
+          try {
+            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            imageGallery.push(result.secure_url);
+          } catch (err) {
+            console.error(`Cloudinary gallery image ${i + 1} error:`, err);
+          }
+        }
+      }
+    }
+
+    const place = new Place({
       name,
       location,
       category,
       description,
       bestTime,
       temperature,
-      rating,
-      isActive: isActive || 'true',
+      rating: rating || 0,
+      isActive: isActive !== undefined ? isActive === 'true' : true,
       placesToVisit: placesToVisit ? placesToVisit.split(',').map(p => p.trim()) : [],
-      nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(f => f.trim()) : [],
-      howToReach: howToReach || '', // Keep as string, not array
-      image: `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`,
-      images: [
-        `https://picsum.photos/seed/gallery-${Date.now()}-0/400/300.jpg`,
-        `https://picsum.photos/seed/gallery-${Date.now()}-1/400/300.jpg`
-      ]
-    };
-    
-    console.log("[adminPlacesRoutes] Creating place with placeholder images:", { 
-      ...placeData, 
-      image: !!placeData.image, 
-      images: placeData.images.length 
+      nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(p => p.trim()) : [],
+      howToReach: howToReach || "",
+      image: imageUrl,
+      images: imageGallery
     });
     
-    // TEMPORARILY SKIP DATABASE SAVE TO TEST BASIC FUNCTIONALITY
-    console.log("[adminPlacesRoutes] Skipping database save for testing");
-    
-    // Return mock response without database
-    const mockPlace = {
-      _id: `test-${Date.now()}`,
-      ...placeData
-    };
-    
-    console.log("[adminPlacesRoutes] Returning mock place:", mockPlace);
-    res.status(201).json(mockPlace);
-    
+    await place.save();
+    res.status(201).json(place);
   } catch (error) {
-    console.error("[adminPlacesRoutes] Error creating place:", error);
-    console.error("[adminPlacesRoutes] Error stack:", error.stack);
-    console.error("[adminPlacesRoutes] Error details:", {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    });
-    
-    // Return detailed error for debugging
+    console.error("Error creating place:", error);
     res.status(500).json({ 
       message: "Server error", 
-      error: error.message,
-      stack: error.stack,
-      details: "Check Vercel function logs for complete error trace"
+      error: error.message
     });
   }
 });

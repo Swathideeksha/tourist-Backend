@@ -75,6 +75,23 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 app.use("/api/analytics", analyticsRoutes);
 
 // 7️⃣ EXPORT FOR VERCEL
+// Error handler for Multer and other unhandled errors
+app.use((err, req, res, next) => {
+  console.error("Global Error Handler caught:", err);
+  
+  if (err.name === 'MulterError' || (err.message && err.message.includes('multer'))) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ message: "File too large. Maximum size is 5MB.", error: err.message });
+    }
+    return res.status(400).json({ message: "File upload error", error: err.message });
+  }
+  
+  res.status(500).json({ 
+    message: err.message || "Internal server error", 
+    error: err.toString()
+  });
+});
+
 module.exports = app;
 
 // 8️⃣ START SERVER (only when not in serverless)
