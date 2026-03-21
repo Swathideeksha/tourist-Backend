@@ -85,19 +85,53 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     
     if (req.files && req.files.image && req.files.image[0]) {
       console.log("🔍 Main image received:", req.files.image[0].mimetype, req.files.image[0].size);
-      imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-      console.log("🔍 Using placeholder for main image:", imageUrl);
+      
+      // Convert Buffer to data URI for Cloudinary upload
+      const fileBuffer = req.files.image[0].buffer;
+      const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+      
+      try {
+        console.log("🔍 Uploading main image to Cloudinary...");
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        imageUrl = result.secure_url;
+        console.log("🔍 Main image uploaded successfully:", imageUrl);
+      } catch (cloudinaryError) {
+        console.error("🔍 Cloudinary main image error:", cloudinaryError);
+        // Use placeholder as fallback
+        imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+        console.log("🔍 Using fallback placeholder for main image:", imageUrl);
+      }
     }
     
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       console.log("🔍 Gallery images received:", galleryFiles.length);
+      
       for (let i = 0; i < galleryFiles.length; i++) {
         if (galleryFiles[i]) {
-          imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+          const fileBuffer = galleryFiles[i].buffer;
+          const dataURI = `data:${galleryFiles[i].mimetype};base64,${fileBuffer.toString('base64')}`;
+          
+          try {
+            console.log(`🔍 Uploading gallery image ${i + 1} to Cloudinary...`);
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            imageGallery.push(result.secure_url);
+            console.log(`🔍 Gallery image ${i + 1} uploaded successfully:`, result.secure_url);
+          } catch (cloudinaryError) {
+            console.error(`🔍 Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
+            // Use placeholder as fallback
+            imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
+            console.log(`🔍 Using fallback placeholder for gallery image ${i + 1}`);
+          }
         }
       }
-      console.log("🔍 Using placeholders for gallery images:", imageGallery.length);
+      console.log("🔍 Final gallery images count:", imageGallery.length);
     }
     
     const place = new Place({
