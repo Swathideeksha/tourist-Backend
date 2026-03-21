@@ -90,16 +90,41 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       const fileBuffer = req.files.image[0].buffer;
       const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
       
+      console.log("🔍 Main image details:", {
+        originalname: req.files.image[0].originalname,
+        mimetype: req.files.image[0].mimetype,
+        size: req.files.image[0].size,
+        bufferLength: req.files.image[0].buffer.length,
+        dataURIPrefix: dataURI.substring(0, 50) + "..."
+      });
+      
       try {
         console.log("🔍 Uploading main image to Cloudinary...");
+        console.log("🔍 Cloudinary config check:", {
+          cloud_name: cloudinary.config().cloud_name,
+          api_key: cloudinary.config().api_key ? 'SET' : 'MISSING'
+        });
+        
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: 'tourist-places',
           resource_type: 'auto',
         });
+        
         imageUrl = result.secure_url;
         console.log("🔍 Main image uploaded successfully:", imageUrl);
+        console.log("🔍 Cloudinary result:", {
+          public_id: result.public_id,
+          secure_url: result.secure_url,
+          format: result.format
+        });
       } catch (cloudinaryError) {
         console.error("🔍 Cloudinary main image error:", cloudinaryError);
+        console.error("🔍 Cloudinary error details:", {
+          message: cloudinaryError.message,
+          name: cloudinaryError.name,
+          stack: cloudinaryError.stack
+        });
+        
         // Use placeholder as fallback
         imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
         console.log("🔍 Using fallback placeholder for main image:", imageUrl);
@@ -115,16 +140,36 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
           const fileBuffer = galleryFiles[i].buffer;
           const dataURI = `data:${galleryFiles[i].mimetype};base64,${fileBuffer.toString('base64')}`;
           
+          console.log(`🔍 Gallery image ${i + 1} details:`, {
+            originalname: galleryFiles[i].originalname,
+            mimetype: galleryFiles[i].mimetype,
+            size: galleryFiles[i].size,
+            bufferLength: galleryFiles[i].buffer.length,
+            dataURIPrefix: dataURI.substring(0, 50) + "..."
+          });
+          
           try {
             console.log(`🔍 Uploading gallery image ${i + 1} to Cloudinary...`);
             const result = await cloudinary.uploader.upload(dataURI, {
               folder: 'tourist-places/gallery',
               resource_type: 'auto',
             });
+            
             imageGallery.push(result.secure_url);
             console.log(`🔍 Gallery image ${i + 1} uploaded successfully:`, result.secure_url);
+            console.log(`🔍 Gallery image ${i + 1} Cloudinary result:`, {
+              public_id: result.public_id,
+              secure_url: result.secure_url,
+              format: result.format
+            });
           } catch (cloudinaryError) {
             console.error(`🔍 Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
+            console.error(`🔍 Gallery image ${i + 1} error details:`, {
+              message: cloudinaryError.message,
+              name: cloudinaryError.name,
+              stack: cloudinaryError.stack
+            });
+            
             // Use placeholder as fallback
             imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
             console.log(`🔍 Using fallback placeholder for gallery image ${i + 1}`);
