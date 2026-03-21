@@ -19,6 +19,7 @@ console.log('Cloudinary config:', {
 });
 
 // Configure Cloudinary storage for multer
+console.log('Creating CloudinaryStorage...');
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -30,5 +31,6 @@ const storage = new CloudinaryStorage({
     }
   }
 });
+console.log('CloudinaryStorage created successfully');
 
 module.exports = { cloudinary, storage };

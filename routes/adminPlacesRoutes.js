@@ -70,6 +70,10 @@ router.get("/:id", async (req, res) => {
 
 // Add new place - handle FormData uploads
 router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
+  console.log("🔍 ROUTE HIT: POST /api/admin/places");
+  console.log("🔍 Request body keys:", Object.keys(req.body || {}));
+  console.log("🔍 Files received:", req.files ? Object.keys(req.files) : 'none');
+  
   try {
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
