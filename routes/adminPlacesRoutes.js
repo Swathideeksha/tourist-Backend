@@ -5,9 +5,9 @@ const Place = require("../models/Place");
 const { cloudinary, storage } = require("../config/cloudinary");
 const multer = require('multer');
 
-// Use CloudinaryStorage to automatically upload files to Cloudinary
+// Use regular multer for memory storage to handle both form fields and files
 const upload = multer({ 
-  storage: storage,
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
@@ -77,23 +77,29 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
   try {
     const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
     
+    console.log("🔍 Form data received:", { name, location, category });
+    
+    // TEMPORARILY USE PLACEHOLDER IMAGES TO TEST BASIC FUNCTIONALITY
     let imageUrl = "";
     let imageGallery = [];
-
-    // CloudinaryStorage automatically sets file.path to the secure URL
+    
     if (req.files && req.files.image && req.files.image[0]) {
-      imageUrl = req.files.image[0].path;
+      console.log("🔍 Main image received:", req.files.image[0].mimetype, req.files.image[0].size);
+      imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
+      console.log("🔍 Using placeholder for main image:", imageUrl);
     }
-
+    
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
+      console.log("🔍 Gallery images received:", galleryFiles.length);
       for (let i = 0; i < galleryFiles.length; i++) {
-        if (galleryFiles[i] && galleryFiles[i].path) {
-          imageGallery.push(galleryFiles[i].path);
+        if (galleryFiles[i]) {
+          imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
         }
       }
+      console.log("🔍 Using placeholders for gallery images:", imageGallery.length);
     }
-
+    
     const place = new Place({
       name,
       location,
@@ -110,10 +116,14 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       images: imageGallery
     });
     
+    console.log("🔍 Saving place to database...");
     await place.save();
+    console.log("🔍 Place saved successfully:", place._id);
+    
     res.status(201).json(place);
   } catch (error) {
-    console.error("Error creating place:", error);
+    console.error("🔍 Error creating place:", error);
+    console.error("🔍 Error stack:", error.stack);
     res.status(500).json({ 
       message: "Server error", 
       error: error.message
