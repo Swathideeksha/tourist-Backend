@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const Place = require("../models/Place");
-const { cloudinary } = require("../config/cloudinary");
+const { cloudinary, storage } = require("../config/cloudinary");
 const multer = require('multer');
 
 const upload = multer({ 
-  storage: multer.memoryStorage(),
+  storage: storage,
   limits: {
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
@@ -44,34 +44,14 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     let imageGallery = [];
 
     if (req.files && req.files.image && req.files.image[0]) {
-      try {
-        const fileBuffer = req.files.image[0].buffer;
-        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: 'tourist-places',
-          resource_type: 'auto',
-        });
-        imageUrl = result.secure_url;
-      } catch (err) {
-        console.error("Cloudinary main image error:", err);
-      }
+      imageUrl = req.files.image[0].path;
     }
 
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       for (let i = 0; i < galleryFiles.length; i++) {
-        const file = galleryFiles[i];
-        if (file && file.buffer) {
-          try {
-            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-            const result = await cloudinary.uploader.upload(dataURI, {
-              folder: 'tourist-places/gallery',
-              resource_type: 'auto',
-            });
-            imageGallery.push(result.secure_url);
-          } catch (err) {
-            console.error(`Cloudinary gallery image ${i + 1} error:`, err);
-          }
+        if (galleryFiles[i] && galleryFiles[i].path) {
+          imageGallery.push(galleryFiles[i].path);
         }
       }
     }
@@ -112,34 +92,14 @@ router.put("/:id", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'image
     let imageGallery = existingImages ? JSON.parse(existingImages) : [];
 
     if (req.files && req.files.image && req.files.image[0]) {
-      try {
-        const fileBuffer = req.files.image[0].buffer;
-        const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
-        const result = await cloudinary.uploader.upload(dataURI, {
-          folder: 'tourist-places',
-          resource_type: 'auto',
-        });
-        imageUrl = result.secure_url;
-      } catch (err) {
-        console.error("Cloudinary main image error:", err);
-      }
+      imageUrl = req.files.image[0].path;
     }
 
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       for (let i = 0; i < galleryFiles.length; i++) {
-        const file = galleryFiles[i];
-        if (file && file.buffer) {
-          try {
-            const dataURI = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-            const result = await cloudinary.uploader.upload(dataURI, {
-              folder: 'tourist-places/gallery',
-              resource_type: 'auto',
-            });
-            imageGallery.push(result.secure_url);
-          } catch (err) {
-            console.error(`Cloudinary gallery image ${i + 1} error:`, err);
-          }
+        if (galleryFiles[i] && galleryFiles[i].path) {
+          imageGallery.push(galleryFiles[i].path);
         }
       }
     }
