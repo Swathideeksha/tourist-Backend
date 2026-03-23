@@ -4,9 +4,9 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dpxwvqyqj',
-  api_key: process.env.CLOUDINARY_API_KEY || '955253823136168',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'KedL2-oui4a4n3xBSNq4T-0waJg'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'tourist-website-demo',
+  api_key: process.env.CLOUDINARY_API_KEY || '123456789012345',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'your-secret-key-here'
 });
 
 // Test Cloudinary configuration
@@ -16,8 +16,8 @@ console.log('Cloudinary config:', {
   api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'USING_FALLBACK',
   configured_cloud_name: cloudinary.config().cloud_name,
   configured_api_key: cloudinary.config().api_key ? 'SET' : 'MISSING',
-  fallback_cloud_name: 'dpxwvqyqj',
-  fallback_api_key: '955253823136168'
+  fallback_cloud_name: 'tourist-website-demo',
+  fallback_api_key: '123456789012345'
 });
 
 // Test Cloudinary connection with a simple API call
