@@ -83,9 +83,20 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     let imageUrl = "";
     let imageGallery = [];
     
+    // SIMPLE TEST: Always use a unique placeholder to see if the issue is with Cloudinary or frontend
+    const uniqueId = Date.now() + Math.random().toString(36).substring(7);
+    
     if (req.files && req.files.image && req.files.image[0]) {
-      console.log("🔍 Main image received:", req.files.image[0].mimetype, req.files.image[0].size);
+      console.log("🔍 Main image received:", req.files.image[0].originalname, req.files.image[0].mimetype, req.files.image[0].size);
       
+      // TEST: Use unique placeholder to verify frontend is updating correctly
+      imageUrl = `https://picsum.photos/seed/${uniqueId}-main/400/300.jpg`;
+      console.log("🔍 Using UNIQUE placeholder for main image:", imageUrl);
+      
+      // TEMPORARILY DISABLE CLOUDINARY TO ISOLATE THE ISSUE
+      console.log("🔍 Cloudinary upload temporarily disabled for testing");
+      
+      /*
       // Convert Buffer to data URI for Cloudinary upload
       const fileBuffer = req.files.image[0].buffer;
       const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
@@ -129,12 +140,26 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
         imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
         console.log("🔍 Using fallback placeholder for main image:", imageUrl);
       }
+      */
     }
     
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       console.log("🔍 Gallery images received:", galleryFiles.length);
       
+      // TEST: Use unique placeholders to verify frontend is updating correctly
+      for (let i = 0; i < galleryFiles.length; i++) {
+        if (galleryFiles[i]) {
+          const uniqueGalleryUrl = `https://picsum.photos/seed/${uniqueId}-gallery-${i}/400/300.jpg`;
+          imageGallery.push(uniqueGalleryUrl);
+          console.log(`🔍 Using UNIQUE placeholder for gallery image ${i + 1}:`, uniqueGalleryUrl);
+        }
+      }
+      
+      // TEMPORARILY DISABLE CLOUDINARY TO ISOLATE THE ISSUE
+      console.log("🔍 Cloudinary gallery upload temporarily disabled for testing");
+      
+      /*
       for (let i = 0; i < galleryFiles.length; i++) {
         if (galleryFiles[i]) {
           const fileBuffer = galleryFiles[i].buffer;
@@ -176,6 +201,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
           }
         }
       }
+      */
       console.log("🔍 Final gallery images count:", imageGallery.length);
     }
     
