@@ -14,6 +14,14 @@ router.get("/", async (req, res) => {
     }
     
     const places = await Place.find(query).sort({ createdAt: -1 });
+    
+    // Add coordinates to console for debugging
+    console.log("[PLACES] Found places with coordinates:", places.map(p => ({
+      name: p.name,
+      latitude: p.latitude,
+      longitude: p.longitude
+    })));
+    
     console.log("[PLACES] Found", places.length, "places for category:", category || "all");
     
     // Map image to img for frontend compatibility

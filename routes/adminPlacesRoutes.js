@@ -161,7 +161,9 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       nearbyFacilities: nearbyFacilities ? nearbyFacilities.split(',').map(p => p.trim()) : [],
       howToReach: howToReach || "",
       image: imageUrl,
-      images: imageGallery
+      images: imageGallery,
+      latitude: parseFloat(req.body.latitude) || null,
+      longitude: parseFloat(req.body.longitude) || null
     });
     
     console.log("🔍 Saving place to database...");
