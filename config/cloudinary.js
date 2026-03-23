@@ -15,7 +15,18 @@ console.log('Cloudinary config:', {
   api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'USING_FALLBACK',
   api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'USING_FALLBACK',
   configured_cloud_name: cloudinary.config().cloud_name,
-  configured_api_key: cloudinary.config().api_key ? 'SET' : 'MISSING'
+  configured_api_key: cloudinary.config().api_key ? 'SET' : 'MISSING',
+  fallback_cloud_name: 'dpxwvqyqj',
+  fallback_api_key: '955253823136168'
+});
+
+// Test Cloudinary connection with a simple API call
+cloudinary.api.ping((error, result) => {
+  if (error) {
+    console.error('Cloudinary connection test failed:', error);
+  } else {
+    console.log('Cloudinary connection test successful:', result);
+  }
 });
 
 // Configure Cloudinary storage for multer

@@ -79,7 +79,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     
     console.log("🔍 Form data received:", { name, location, category });
     
-    // Upload images to Cloudinary
+    // Upload images to Cloudinary with fallback handling
     let imageUrl = "";
     let imageGallery = [];
     
@@ -102,9 +102,17 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
         console.log("🔍 Main image uploaded successfully:", imageUrl);
       } catch (cloudinaryError) {
         console.error("🔍 Cloudinary main image error:", cloudinaryError);
+        console.error("🔍 Cloudinary error details:", {
+          message: cloudinaryError.message,
+          name: cloudinaryError.name,
+          http_code: cloudinaryError.http_code
+        });
+        
+        // Return a more user-friendly error message
         return res.status(500).json({ 
-          message: "Failed to upload main image", 
-          error: cloudinaryError.message 
+          message: "Cloudinary configuration error. Please check your Cloudinary API keys.", 
+          error: "Image upload failed due to invalid Cloudinary credentials. Please update your environment variables.",
+          details: cloudinaryError.message
         });
       }
     }
@@ -131,7 +139,8 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
             console.error(`🔍 Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
             return res.status(500).json({ 
               message: `Failed to upload gallery image ${i + 1}`, 
-              error: cloudinaryError.message 
+              error: "Cloudinary configuration error. Please check your Cloudinary API keys.",
+              details: cloudinaryError.message
             });
           }
         }
