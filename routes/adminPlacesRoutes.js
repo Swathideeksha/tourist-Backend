@@ -84,7 +84,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     let imageGallery = [];
     
     // SIMPLE TEST: Always use a unique placeholder to see if the issue is with Cloudinary or frontend
-    const uniqueId = Date.now() + Math.random().toString(36).substring(7);
+    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2) + '-' + Math.random().toString(36).substring(2);
     
     if (req.files && req.files.image && req.files.image[0]) {
       console.log("🔍 Main image received:", req.files.image[0].originalname, req.files.image[0].mimetype, req.files.image[0].size);
@@ -150,7 +150,7 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
       // TEST: Use unique placeholders to verify frontend is updating correctly
       for (let i = 0; i < galleryFiles.length; i++) {
         if (galleryFiles[i]) {
-          const uniqueGalleryUrl = `https://picsum.photos/seed/${uniqueId}-gallery-${i}/400/300.jpg`;
+          const uniqueGalleryUrl = `https://picsum.photos/seed/${uniqueId}-gallery-${i}-${Math.random().toString(36).substring(2)}/400/300.jpg`;
           imageGallery.push(uniqueGalleryUrl);
           console.log(`🔍 Using UNIQUE placeholder for gallery image ${i + 1}:`, uniqueGalleryUrl);
         }
