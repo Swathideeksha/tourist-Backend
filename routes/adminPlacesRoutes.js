@@ -79,43 +79,20 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
     
     console.log("🔍 Form data received:", { name, location, category });
     
-    // TEMPORARILY USE PLACEHOLDER IMAGES TO TEST BASIC FUNCTIONALITY
+    // Upload images to Cloudinary
     let imageUrl = "";
     let imageGallery = [];
-    
-    // SIMPLE TEST: Always use a unique placeholder to see if the issue is with Cloudinary or frontend
-    const uniqueId = Date.now() + '-' + Math.random().toString(36).substring(2) + '-' + Math.random().toString(36).substring(2);
     
     if (req.files && req.files.image && req.files.image[0]) {
       console.log("🔍 Main image received:", req.files.image[0].originalname, req.files.image[0].mimetype, req.files.image[0].size);
       
-      // TEST: Use unique placeholder to verify frontend is updating correctly
-      imageUrl = `https://picsum.photos/seed/${uniqueId}-main/400/300.jpg`;
-      console.log("🔍 Using UNIQUE placeholder for main image:", imageUrl);
-      
-      // TEMPORARILY DISABLE CLOUDINARY TO ISOLATE THE ISSUE
-      console.log("🔍 Cloudinary upload temporarily disabled for testing");
-      
-      /*
       // Convert Buffer to data URI for Cloudinary upload
       const fileBuffer = req.files.image[0].buffer;
       const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
       
-      console.log("🔍 Main image details:", {
-        originalname: req.files.image[0].originalname,
-        mimetype: req.files.image[0].mimetype,
-        size: req.files.image[0].size,
-        bufferLength: req.files.image[0].buffer.length,
-        dataURIPrefix: dataURI.substring(0, 50) + "..."
-      });
+      console.log("🔍 Uploading main image to Cloudinary...");
       
       try {
-        console.log("🔍 Uploading main image to Cloudinary...");
-        console.log("🔍 Cloudinary config check:", {
-          cloud_name: cloudinary.config().cloud_name,
-          api_key: cloudinary.config().api_key ? 'SET' : 'MISSING'
-        });
-        
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: 'tourist-places',
           resource_type: 'auto',
@@ -123,55 +100,23 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
         
         imageUrl = result.secure_url;
         console.log("🔍 Main image uploaded successfully:", imageUrl);
-        console.log("🔍 Cloudinary result:", {
-          public_id: result.public_id,
-          secure_url: result.secure_url,
-          format: result.format
-        });
       } catch (cloudinaryError) {
         console.error("🔍 Cloudinary main image error:", cloudinaryError);
-        console.error("🔍 Cloudinary error details:", {
-          message: cloudinaryError.message,
-          name: cloudinaryError.name,
-          stack: cloudinaryError.stack
+        return res.status(500).json({ 
+          message: "Failed to upload main image", 
+          error: cloudinaryError.message 
         });
-        
-        // Use placeholder as fallback
-        imageUrl = `https://picsum.photos/seed/place-${Date.now()}/400/300.jpg`;
-        console.log("🔍 Using fallback placeholder for main image:", imageUrl);
       }
-      */
     }
     
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       console.log("🔍 Gallery images received:", galleryFiles.length);
       
-      // TEST: Use unique placeholders to verify frontend is updating correctly
-      for (let i = 0; i < galleryFiles.length; i++) {
-        if (galleryFiles[i]) {
-          const uniqueGalleryUrl = `https://picsum.photos/seed/${uniqueId}-gallery-${i}-${Math.random().toString(36).substring(2)}/400/300.jpg`;
-          imageGallery.push(uniqueGalleryUrl);
-          console.log(`🔍 Using UNIQUE placeholder for gallery image ${i + 1}:`, uniqueGalleryUrl);
-        }
-      }
-      
-      // TEMPORARILY DISABLE CLOUDINARY TO ISOLATE THE ISSUE
-      console.log("🔍 Cloudinary gallery upload temporarily disabled for testing");
-      
-      /*
       for (let i = 0; i < galleryFiles.length; i++) {
         if (galleryFiles[i]) {
           const fileBuffer = galleryFiles[i].buffer;
           const dataURI = `data:${galleryFiles[i].mimetype};base64,${fileBuffer.toString('base64')}`;
-          
-          console.log(`🔍 Gallery image ${i + 1} details:`, {
-            originalname: galleryFiles[i].originalname,
-            mimetype: galleryFiles[i].mimetype,
-            size: galleryFiles[i].size,
-            bufferLength: galleryFiles[i].buffer.length,
-            dataURIPrefix: dataURI.substring(0, 50) + "..."
-          });
           
           try {
             console.log(`🔍 Uploading gallery image ${i + 1} to Cloudinary...`);
@@ -182,26 +127,15 @@ router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images'
             
             imageGallery.push(result.secure_url);
             console.log(`🔍 Gallery image ${i + 1} uploaded successfully:`, result.secure_url);
-            console.log(`🔍 Gallery image ${i + 1} Cloudinary result:`, {
-              public_id: result.public_id,
-              secure_url: result.secure_url,
-              format: result.format
-            });
           } catch (cloudinaryError) {
             console.error(`🔍 Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
-            console.error(`🔍 Gallery image ${i + 1} error details:`, {
-              message: cloudinaryError.message,
-              name: cloudinaryError.name,
-              stack: cloudinaryError.stack
+            return res.status(500).json({ 
+              message: `Failed to upload gallery image ${i + 1}`, 
+              error: cloudinaryError.message 
             });
-            
-            // Use placeholder as fallback
-            imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
-            console.log(`🔍 Using fallback placeholder for gallery image ${i + 1}`);
           }
         }
       }
-      */
       console.log("🔍 Final gallery images count:", imageGallery.length);
     }
     
@@ -255,29 +189,53 @@ router.put("/:id", upload.fields([
     let imageUrl = existingImage || existingPlace.image || "";
     let imageGallery = existingImages ? JSON.parse(existingImages) : existingPlace.images || [];
 
-    // Replace image with newly uploaded one via CloudinaryStorage
+    // Handle new image uploads to Cloudinary
     if (req.files && req.files.image && req.files.image[0]) {
-      imageUrl = req.files.image[0].path;
+      const fileBuffer = req.files.image[0].buffer;
+      const dataURI = `data:${req.files.image[0].mimetype};base64,${fileBuffer.toString('base64')}`;
+      
+      try {
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: 'tourist-places',
+          resource_type: 'auto',
+        });
+        imageUrl = result.secure_url;
+      } catch (cloudinaryError) {
+        console.error("Cloudinary main image error:", cloudinaryError);
+        return res.status(500).json({ 
+          message: "Failed to upload main image", 
+          error: cloudinaryError.message 
+        });
+      }
     }
 
     if (req.files && req.files.images) {
       const galleryFiles = req.files.images;
       const newGalleryImages = [];
+      
       for (let i = 0; i < galleryFiles.length; i++) {
-        if (galleryFiles[i] && galleryFiles[i].path) {
-          newGalleryImages.push(galleryFiles[i].path);
+        if (galleryFiles[i]) {
+          const fileBuffer = galleryFiles[i].buffer;
+          const dataURI = `data:${galleryFiles[i].mimetype};base64,${fileBuffer.toString('base64')}`;
+          
+          try {
+            const result = await cloudinary.uploader.upload(dataURI, {
+              folder: 'tourist-places/gallery',
+              resource_type: 'auto',
+            });
+            newGalleryImages.push(result.secure_url);
+          } catch (cloudinaryError) {
+            console.error(`Cloudinary gallery image ${i + 1} error:`, cloudinaryError);
+            return res.status(500).json({ 
+              message: `Failed to upload gallery image ${i + 1}`, 
+              error: cloudinaryError.message 
+            });
+          }
         }
       }
+      
       if (newGalleryImages.length > 0) {
         imageGallery = newGalleryImages;
-      }
-    }
-    
-    // Ensure we always have gallery images
-    if (!imageGallery || imageGallery.length === 0) {
-      imageGallery = [];
-      for (let i = 0; i < 3; i++) {
-        imageGallery.push(`https://picsum.photos/seed/gallery-${Date.now()}-${i}/400/300.jpg`);
       }
     }
     
