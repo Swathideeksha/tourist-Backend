@@ -19,7 +19,21 @@ router.get("/", async (req, res) => {
     console.log("[PLACES] Found places with coordinates:", places.map(p => ({
       name: p.name,
       latitude: p.latitude,
-      longitude: p.longitude
+      longitude: p.longitude,
+      hasCoordinates: !!(p.latitude && p.longitude),
+      isValidCoordinates: !!(p.latitude && p.longitude && !isNaN(p.latitude) && !isNaN(p.longitude))
+    })));
+    
+    // Filter and log places with valid coordinates
+    const validCoordinatePlaces = places.filter(place => 
+      place.latitude && place.longitude && !isNaN(place.latitude) && !isNaN(place.longitude)
+    );
+    
+    console.log("[PLACES] Places with valid coordinates for map:", validCoordinatePlaces.length);
+    console.log("[PLACES] Valid coordinate places:", validCoordinatePlaces.map(p => ({
+      name: p.name,
+      lat: p.latitude,
+      lng: p.longitude
     })));
     
     console.log("[PLACES] Found", places.length, "places for category:", category || "all");
