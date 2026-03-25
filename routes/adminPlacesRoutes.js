@@ -187,14 +187,24 @@ router.put("/:id", upload.fields([
   { name: 'images', maxCount: 6 }
 ]), async (req, res) => {
   try {
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach, existingImage, existingImages } = req.body;
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach, existingImage, existingImages, latitude, longitude } = req.body;
     
     console.log("[adminPlacesRoutes] PUT request - updating place:", req.params.id);
+    console.log("[adminPlacesRoutes] Received coordinates:", { latitude, longitude });
     
-    // Get the existing place to preserve old images if no new ones are uploaded
-    const existingPlace = await Place.findById(req.params.id);
-    if (!existingPlace) {
-      return res.status(404).json({ message: "Place not found" });
+    // Get the existing place with timeout handling
+    let existingPlace;
+    try {
+      existingPlace = await Place.findById(req.params.id).maxTimeMS(15000); // 15 second timeout
+      if (!existingPlace) {
+        return res.status(404).json({ message: "Place not found" });
+      }
+    } catch (dbError) {
+      console.error("[adminPlacesRoutes] Database error finding place:", dbError);
+      return res.status(500).json({ 
+        message: "Database error", 
+        error: "Unable to find place. Please try again." 
+      });
     }
     
     let imageUrl = existingImage || existingPlace.image || "";
@@ -270,9 +280,11 @@ router.put("/:id", upload.fields([
         isActive: isActive !== undefined ? isActive === 'true' : true,
         placesToVisit: placesToVisit ? placesToVisit.split('\n').filter(p => p.trim()) : [],
         nearbyFacilities: nearbyFacilities ? nearbyFacilities.split('\n').filter(f => f.trim()) : [],
-        howToReach: howToReach || ''
+        howToReach: howToReach || '',
+        latitude: latitude ? parseFloat(latitude) : existingPlace.latitude,
+        longitude: longitude ? parseFloat(longitude) : existingPlace.longitude
       },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true, maxTimeMS: 15000 }
     );
 
     res.json(updatedPlace);
