@@ -48,6 +48,19 @@ router.get("/", async (req, res) => {
     
     const places = await Place.find().sort({ createdAt: -1 });
     console.log("[adminPlacesRoutes] Found places:", places.length);
+    
+    // Debug coordinates for each place
+    places.forEach((place, index) => {
+      console.log(`[adminPlacesRoutes] Place ${index + 1}:`, {
+        name: place.name,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        hasCoordinates: !!(place.latitude && place.longitude),
+        latType: typeof place.latitude,
+        lngType: typeof place.longitude
+      });
+    });
+    
     res.json(places);
   } catch (error) {
     console.error("[adminPlacesRoutes] Error fetching places:", error);
