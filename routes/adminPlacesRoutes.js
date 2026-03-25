@@ -82,15 +82,19 @@ router.get("/:id", async (req, res) => {
 });
 
 // Add new place - handle FormData uploads
-router.post("/", upload.fields([{ name: 'image', maxCount: 1 }, { name: 'images', maxCount: 6 }]), async (req, res) => {
+router.post("/", upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'images', maxCount: 6 }
+]), async (req, res) => {
   console.log("🔍 ROUTE HIT: POST /api/admin/places");
   console.log("🔍 Request body keys:", Object.keys(req.body || {}));
   console.log("🔍 Files received:", req.files ? Object.keys(req.files) : 'none');
   
   try {
-    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach } = req.body;
+    const { name, location, category, description, bestTime, temperature, rating, isActive, placesToVisit, nearbyFacilities, howToReach, latitude, longitude } = req.body;
     
     console.log("🔍 Form data received:", { name, location, category });
+    console.log("🔍 Coordinates received:", { latitude, longitude, latType: typeof latitude, lngType: typeof longitude });
     
     // Upload images to Cloudinary with fallback handling
     let imageUrl = "";
