@@ -58,7 +58,7 @@ router.post("/", upload.single('image'), async (req, res) => {
     
     const { 
       name, type, model, capacity, safetyGear, engine, 
-      contact, address, amenities, travelInfo 
+      contact, address, website, amenities, travelInfo 
     } = req.body;
     
     let imageUrl = "";
@@ -101,6 +101,7 @@ router.post("/", upload.single('image'), async (req, res) => {
       engine,
       contact,
       address,
+      website,
       amenities: amenities ? amenities.split(',').map(a => a.trim()).filter(a => a) : [],
       travelInfo: travelInfo ? travelInfo.split(',').map(t => t.trim()).filter(t => t) : [],
       overallRating: 0,
@@ -124,7 +125,7 @@ router.put("/:id", upload.single('image'), async (req, res) => {
     
     const { 
       name, type, model, capacity, safetyGear, engine, 
-      contact, address, amenities, travelInfo 
+      contact, address, website, amenities, travelInfo 
     } = req.body;
     
     // Get existing bus
@@ -170,6 +171,7 @@ router.put("/:id", upload.single('image'), async (req, res) => {
         engine,
         contact, 
         address, 
+        website,
         amenities: amenities ? amenities.split(',').map(a => a.trim()).filter(a => a) : [],
         travelInfo: travelInfo ? travelInfo.split(',').map(t => t.trim()).filter(t => t) : [],
         reviewsCount: existingBus.reviewsCount || 0

@@ -10,6 +10,7 @@ const busSchema = new mongoose.Schema({
   engine: { type: String },
   contact: { type: String },
   address: { type: String },
+  website: { type: String },
   amenities: [{ type: String }],
   reviews: [{
     name: String,
