@@ -75,25 +75,12 @@ const placeSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true,
-    lowercase: true
+    lowercase: true,
+    trim: true
   },
   createdAt: { type: Date, default: Date.now }
 }, {
   timestamps: true
-});
-
-// Pre-save hook to generate slug from name
-placeSchema.pre('save', function(next) {
-  if (this.isModified('name') && !this.slug) {
-    this.slug = this.name
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .trim();
-  }
-  next();
 });
 
 module.exports = mongoose.models.Place || mongoose.model("Place", placeSchema);

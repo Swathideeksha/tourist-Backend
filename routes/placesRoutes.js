@@ -51,27 +51,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get single place by slug
-router.get("/:slug", async (req, res) => {
-  try {
-    console.log("[PLACES] GET /api/places/:slug - Fetching place by slug:", req.params.slug);
-    
-    const place = await Place.findOne({ slug: req.params.slug });
-    
-    if (!place) {
-      console.log("[PLACES] Place not found with slug:", req.params.slug);
-      return res.status(404).json({ message: "Place not found" });
-    }
-    
-    console.log("[PLACES] Place found:", place.name);
-    res.json(place);
-  } catch (error) {
-    console.error("[PLACES] Error fetching place by slug:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-});
-
-// Add coordinates to existing places (utility endpoint)
+// POST /api/places/add-coordinates - Add sample coordinates to existing places
 router.post("/add-coordinates", async (req, res) => {
   try {
     console.log("[PLACES] Adding coordinates to existing places...");

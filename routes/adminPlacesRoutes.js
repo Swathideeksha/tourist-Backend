@@ -180,7 +180,8 @@ router.post("/", upload.fields([
       image: imageUrl,
       images: imageGallery,
       latitude: parseFloat(req.body.latitude) || null,
-      longitude: parseFloat(req.body.longitude) || null
+      longitude: parseFloat(req.body.longitude) || null,
+      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
     });
     
     console.log("🔍 Saving place to database...");
@@ -299,7 +300,8 @@ router.put("/:id", upload.fields([
         nearbyFacilities: nearbyFacilities ? nearbyFacilities.split('\n').filter(f => f.trim()) : [],
         howToReach: howToReach || '',
         latitude: latitude ? parseFloat(latitude) : existingPlace.latitude,
-        longitude: longitude ? parseFloat(longitude) : existingPlace.longitude
+        longitude: longitude ? parseFloat(longitude) : existingPlace.longitude,
+        slug: name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') : existingPlace.slug
       },
       { new: true, runValidators: true, maxTimeMS: 15000 }
     );
