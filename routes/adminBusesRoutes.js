@@ -122,10 +122,12 @@ router.post("/", upload.single('image'), async (req, res) => {
 router.put("/:id", upload.single('image'), async (req, res) => {
   try {
     console.log("[adminBusesRoutes] PUT /api/admin/buses - Updating bus");
+    console.log("[adminBusesRoutes] Request body:", req.body);
+    console.log("[adminBusesRoutes] Request file:", req.file ? req.file.originalname : 'No file');
     
     const { 
       name, type, model, capacity, safetyGear, engine, 
-      contact, address, website, amenities, travelInfo 
+      address, website, amenities, travelInfo, imageUrl 
     } = req.body;
     
     // Get existing bus
@@ -134,7 +136,13 @@ router.put("/:id", upload.single('image'), async (req, res) => {
       return res.status(404).json({ message: "Bus not found" });
     }
     
-    let imageUrl = existingBus.image; // Keep existing image by default
+    let finalImageUrl = existingBus.image; // Keep existing image by default
+    
+    // Handle imageUrl from form (if no new file uploaded)
+    if (imageUrl && !req.file) {
+      finalImageUrl = imageUrl;
+      console.log("[adminBusesRoutes] Using provided imageUrl:", finalImageUrl);
+    }
     
     // Handle new image upload to Cloudinary
     if (req.file) {
@@ -151,38 +159,38 @@ router.put("/:id", upload.single('image'), async (req, res) => {
           resource_type: 'auto',
         });
         
-        imageUrl = result.secure_url;
-        console.log("[adminBusesRoutes] New image uploaded successfully:", imageUrl);
+        finalImageUrl = result.secure_url;
+        console.log("[adminBusesRoutes] New image uploaded successfully:", finalImageUrl);
       } catch (cloudinaryError) {
         console.error("[adminBusesRoutes] Cloudinary upload error:", cloudinaryError);
-        // Keep existing image if upload fails
+        // Keep existing image if Cloudinary fails
       }
     }
     
+    // Update bus with new data
     const updatedBus = await Bus.findByIdAndUpdate(
       req.params.id,
       {
-        name, 
-        type, 
-        image: imageUrl,
-        model, 
-        capacity, 
-        safetyGear, 
-        engine,
-        contact, 
-        address, 
-        website,
-        amenities: amenities ? amenities.split(',').map(a => a.trim()).filter(a => a) : [],
-        travelInfo: travelInfo ? travelInfo.split(',').map(t => t.trim()).filter(t => t) : [],
-        reviewsCount: existingBus.reviewsCount || 0
+        name: name || existingBus.name,
+        type: type || existingBus.type,
+        image: finalImageUrl,
+        model: model || existingBus.model,
+        capacity: capacity || existingBus.capacity,
+        safetyGear: safetyGear || existingBus.safetyGear,
+        engine: engine || existingBus.engine,
+        address: address || existingBus.address,
+        website: website || existingBus.website,
+        amenities: amenities ? amenities.split(',').map(a => a.trim()).filter(a => a) : existingBus.amenities,
+        travelInfo: travelInfo ? travelInfo.split(',').map(t => t.trim()).filter(t => t) : existingBus.travelInfo,
       },
       { new: true, runValidators: true }
     );
-
+    
     console.log("[adminBusesRoutes] Bus updated successfully:", updatedBus._id);
     res.json(updatedBus);
   } catch (error) {
     console.error("[adminBusesRoutes] Error updating bus:", error);
+    console.error("[adminBusesRoutes] Error stack:", error.stack);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
